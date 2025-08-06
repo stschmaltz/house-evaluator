@@ -67,7 +67,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8">
+    <div className="min-h-[80vh] flex flex-col items-center justify-center p-8">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">
           Example Template

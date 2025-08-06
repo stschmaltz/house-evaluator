@@ -9,6 +9,8 @@ import { NextPage } from 'next';
 import SEO from '../next-seo.config';
 
 import { CurrentUserProvider } from '../src/context/UserContext';
+import { ThemeProvider } from '../context/ThemeContext';
+import { ProtectedLayout } from '../components/ProtectedLayout';
 import '../src/app/globals.css';
 
 type NextPageWithLayout = NextPage & {
@@ -22,7 +24,11 @@ type AppPropsWithLayout = AppProps & {
 export default function App({ Component, pageProps }: AppPropsWithLayout) {
   const defaultLayout = (page: ReactElement) => (
     <UserProvider user={pageProps.user}>
-      <CurrentUserProvider>{page}</CurrentUserProvider>
+      <ThemeProvider>
+        <CurrentUserProvider>
+          <ProtectedLayout>{page}</ProtectedLayout>
+        </CurrentUserProvider>
+      </ThemeProvider>
     </UserProvider>
   );
 
@@ -35,10 +41,10 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
           name="viewport"
           content="minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no, user-scalable=no, viewport-fit=cover"
         />
-        <title>Example Template</title>
+        <title>Example App</title>
         <meta
           name="description"
-          content="A Next.js template with GraphQL, Auth0 authentication, and MongoDB integration"
+          content="Example Next.js application with authentication and theming"
         />
       </Head>
       <DefaultSeo {...SEO} />
