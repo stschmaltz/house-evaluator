@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Example Template
+
+This is a Next.js template project that includes a complete GraphQL setup with Auth0 authentication, MongoDB integration, and modern development tooling.
+
+## Features
+
+- **Next.js 15** with App Router
+- **GraphQL** API with GraphQL Yoga
+- **Authentication** with Auth0
+- **Database** with MongoDB integration
+- **TypeScript** with strict configuration
+- **ESLint & Prettier** for code quality
+- **Tailwind CSS** with DaisyUI components
+- **PWA** support with next-pwa
+- **SEO** optimization with next-seo
+- **Dependency Injection** with Inversify
 
 ## Getting Started
 
-First, run the development server:
+1. Clone this repository:
+
+```bash
+git clone <your-repo-url>
+cd example
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Set up environment variables:
+
+```bash
+cp .env.local.example .env.local
+```
+
+4. Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `/pages` - Next.js pages and API routes
+- `/src/components` - React components
+- `/src/context` - React context providers
+- `/data/graphql` - GraphQL schema and resolvers
+- `/repositories` - Data access layer
+- `/types` - TypeScript type definitions
+- `/lib` - Utility functions and configurations
 
-## Learn More
+## Available Scripts
 
-To learn more about Next.js, take a look at the following resources:
+- `npm run dev` - Start development server
+- `npm run build` - Build production application
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm run prettier` - Format code with Prettier
+- `npm run codegen` - Generate GraphQL types
+- `npm run tsc` - Run TypeScript compiler
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+This template is optimized for deployment on Vercel. You can also deploy to other platforms that support Next.js.
 
-## Deploy on Vercel
+## Customization
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Update the project name and description in `package.json`
+2. Configure your Auth0 settings in environment variables
+3. Set up your MongoDB connection
+4. Customize the GraphQL schema in `/data/graphql`
+5. Update SEO configuration in `next-seo.config.js`
+6. Modify styling and components as needed

@@ -1,27 +1,67 @@
 {
-  "name": "health-data-ai-coach",
+  "name": "example",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build",
+    "postbuild": "next-sitemap",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint --fix --ignore-path .gitignore .",
+    "prettier": "prettier --write .",
+    "fmt": "prettier --write .",
+    "prepare": "husky",
+    "lint-staged-hook": "lint-staged --debug",
+    "codegen": "graphql-codegen --config codegen.yml",
+    "tsc": "tsc"
   },
   "dependencies": {
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "next": "15.4.5"
+    "@auth0/nextjs-auth0": "^3.5.0",
+    "@graphql-tools/schema": "^10.0.6",
+    "@vercel/analytics": "^1.5.0",
+    "@vercel/speed-insights": "^1.2.0",
+    "auth0": "^4.28.0",
+    "daisyui": "^4.12.23",
+    "graphql": "^16.11.0",
+    "graphql-tools": "^9.0.20",
+    "graphql-yoga": "5.15.1",
+    "inversify": "^7.7.0",
+    "mongodb": "^6.18.0",
+    "next": "15.4.5",
+    "next-pwa": "^5.6.0",
+    "next-seo": "^6.8.0",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "reflect-metadata": "^0.2.2",
+    "theme-change": "^2.5.0"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@graphql-codegen/cli": "^5.0.6",
+    "@graphql-codegen/typescript": "^4.1.6",
+    "@graphql-codegen/typescript-operations": "^4.6.1",
+    "@next/eslint-plugin-next": "^15.3.1",
+    "@typescript-eslint/eslint-plugin": "^8.31.0",
+    "@typescript-eslint/parser": "^8.31.0",
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4.1.11",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
+    "autoprefixer": "^10.4.20",
     "eslint": "^9",
     "eslint-config-next": "15.4.5",
-    "@eslint/eslintrc": "^3"
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.3",
+    "eslint-plugin-react": "^7.37.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.7",
+    "next-sitemap": "^4.2.3",
+    "postcss": "^8.4.49",
+    "prettier": "^3.6.2",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": "npm run lint --fix --ignore-path .gitignore"
   }
 }
