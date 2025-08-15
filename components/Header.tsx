@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { UserObject } from '../types/user';
 
 interface HeaderProps {
@@ -40,7 +41,13 @@ export function Header({ currentUser }: HeaderProps) {
             {currentUser.picture && (
               <div className="avatar">
                 <div className="w-10 h-10 rounded-full ring-2 ring-success ring-offset-base-100 ring-offset-2">
-                  <img src={currentUser.picture} alt="Profile" />
+                  <Image
+                    src={currentUser.picture}
+                    alt="Profile"
+                    width={40}
+                    height={40}
+                    className="rounded-full"
+                  />
                 </div>
               </div>
             )}

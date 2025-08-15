@@ -15,6 +15,16 @@ interface RouteRequest {
   departureTime?: string;
 }
 
+interface TransitStep {
+  mode: 'WALKING' | 'TRANSIT';
+  duration: string;
+  transitLineInfo?: {
+    vehicle: string;
+    lineName: string;
+    lineColor?: string;
+  };
+}
+
 interface TransitDetails {
   totalWalkingTime?: string;
   numberOfTransfers?: number;
@@ -23,15 +33,47 @@ interface TransitDetails {
     units: string;
     nanos?: number;
   };
-  transitSteps?: Array<{
-    mode: 'WALKING' | 'TRANSIT';
-    duration: string;
-    transitLineInfo?: {
-      vehicle: string;
-      lineName: string;
-      lineColor?: string;
+  transitSteps?: TransitStep[];
+}
+
+interface CalculatedRoute {
+  duration: string;
+  distance: string;
+  polyline?: string;
+  transitDetails?: TransitDetails;
+}
+
+interface LegStep {
+  travelMode?: 'WALK' | 'TRANSIT';
+  staticDuration?: string;
+  duration?: string;
+  transitDetails?: {
+    transitLine?: {
+      vehicle?: { type?: string };
+      name?: string;
+      color?: string;
     };
-  }>;
+  };
+}
+
+interface Leg {
+  steps?: LegStep[];
+}
+
+interface TravelAdvisory {
+  transitFare?: {
+    currencyCode: string;
+    units: string;
+    nanos?: number;
+  };
+}
+
+interface GoogleRoute {
+  duration?: string;
+  distanceMeters?: number;
+  polyline?: { encodedPolyline?: string };
+  legs?: Leg[];
+  travelAdvisory?: TravelAdvisory;
 }
 
 interface RouteResponse {
@@ -90,7 +132,7 @@ export default async function handler(
           if (routeResponse.multipleRoutes) {
             // For transit with multiple route options
             return routeResponse.multipleRoutes.map(
-              (route: any, index: number) => ({
+              (route: CalculatedRoute, index: number) => ({
                 destination: `${destination.name || destination.address || 'Unknown destination'}${routeResponse.multipleRoutes.length > 1 ? ` (Option ${index + 1})` : ''}`,
                 duration: route.duration,
                 distance: route.distance,
@@ -155,7 +197,7 @@ async function calculateRoute(
   travelMode: 'DRIVE' | 'TRANSIT' | 'WALK' | 'BICYCLE',
   departureTime?: string,
 ) {
-  const requestBody: any = {
+  const requestBody: Record<string, unknown> = {
     origin: formatWaypoint(origin),
     destination: formatWaypoint(destination),
     travelMode,
@@ -219,9 +261,9 @@ async function calculateRoute(
   if (data.routes && data.routes.length > 0) {
     if (travelMode === 'TRANSIT') {
       // Return up to 3 transit route alternatives
-      const routes = data.routes
+      const routes = (data.routes as GoogleRoute[])
         .slice(0, 3)
-        .map((route: any, index: number) => ({
+        .map((route: GoogleRoute) => ({
           duration: formatDuration(route.duration) || 'Unknown',
           distance: route.distanceMeters
             ? `${(route.distanceMeters / 1000).toFixed(1)} km`
@@ -299,7 +341,10 @@ function formatWaypoint(location: {
   throw new Error('Invalid waypoint format');
 }
 
-function parseTransitDetails(leg: any, travelAdvisory?: any): TransitDetails {
+function parseTransitDetails(
+  leg: Leg,
+  travelAdvisory?: TravelAdvisory,
+): TransitDetails {
   const transitDetails: TransitDetails = {};
 
   if (travelAdvisory?.transitFare) {
@@ -309,7 +354,7 @@ function parseTransitDetails(leg: any, travelAdvisory?: any): TransitDetails {
   if (leg.steps) {
     let walkingTime = 0;
     let transfers = 0;
-    const transitSteps: any[] = [];
+    const transitSteps: TransitStep[] = [];
 
     // Merge consecutive walking steps
     let currentWalkingDuration = 0;
@@ -383,7 +428,7 @@ function parseTimeToISO(timeString: string): string {
   return today.toISOString();
 }
 
-function deduplicateRoutes(routes: any[]): any[] {
+function deduplicateRoutes(routes: CalculatedRoute[]): CalculatedRoute[] {
   const seen = new Set<string>();
 
   return routes.filter((route) => {
@@ -393,7 +438,7 @@ function deduplicateRoutes(routes: any[]): any[] {
       route.transitDetails?.totalWalkingTime || '',
       route.transitDetails?.numberOfTransfers || 0,
       route.transitDetails?.transitSteps
-        ?.map((step: any) =>
+        ?.map((step: TransitStep) =>
           step.mode === 'WALKING' ? 'WALK' : step.transitLineInfo?.lineName,
         )
         .join('|') || '',
