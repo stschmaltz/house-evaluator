@@ -1,9 +1,8 @@
 interface LoadingStateProps {
   isLoading: boolean;
-  isSigningIn: boolean;
 }
 
-export function LoadingState({ isLoading, isSigningIn }: LoadingStateProps) {
+export function LoadingState({ isLoading }: LoadingStateProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-info/10 via-base-100 to-accent/10 flex items-center justify-center">
       <div className="card bg-gradient-to-br from-info/10 to-accent/10 shadow-xl border border-info/20">
