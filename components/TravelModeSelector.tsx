@@ -4,8 +4,6 @@ interface TravelModeSelectorProps {
 }
 
 export function TravelModeSelector({
-  selectedMode,
-  onModeChange,
   departureTime,
   onDepartureTimeChange,
 }: TravelModeSelectorProps) {
@@ -13,6 +11,7 @@ export function TravelModeSelector({
   const now = new Date();
   const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
   const displayTime = departureTime || currentTime;
+
   return (
     <div className="card bg-base-100 shadow-xl border border-primary/20">
       <div className="card-body p-6">
@@ -32,20 +31,13 @@ export function TravelModeSelector({
               />
             </svg>
           </div>
-          <h2 className="text-lg font-bold text-base-content">Travel Mode</h2>
+          <h2 className="text-lg font-bold text-base-content">Route Options</h2>
         </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={() => onModeChange('DRIVE')}
-            className={`flex-1 btn btn-sm transition-all duration-200 ${
-              selectedMode === 'DRIVE'
-                ? 'btn-primary'
-                : 'btn-outline btn-primary hover:btn-primary'
-            }`}
-          >
+        <div className="p-3 bg-info/10 rounded-lg border border-info/20 mb-4">
+          <div className="flex items-center gap-2 text-info text-sm">
             <svg
-              className="w-4 h-4 mr-2"
+              className="w-4 h-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -54,95 +46,48 @@ export function TravelModeSelector({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M7 4v3a1 1 0 001 1h3m0-4a2 2 0 012 2v1a1 1 0 001 1h2a1 1 0 001-1V6a2 2 0 012-2m-6 0V2m0 0a2 2 0 012-2h2a2 2 0 012 2v2M7 7v10a2 2 0 002 2h6a2 2 0 002-2V7M7 7H4a1 1 0 00-1 1v8a1 1 0 001 1h3"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            Driving
-          </button>
-
-          <button
-            onClick={() => onModeChange('TRANSIT')}
-            className={`flex-1 btn btn-sm transition-all duration-200 ${
-              selectedMode === 'TRANSIT'
-                ? 'btn-secondary'
-                : 'btn-outline btn-secondary hover:btn-secondary'
-            }`}
-          >
-            <svg
-              className="w-4 h-4 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
-              />
-            </svg>
-            Transit
-          </button>
+            <span>
+              We'll show routes for driving 🚗, transit 🚌, walking 🚶, and
+              biking 🚴 all at once!
+            </span>
+          </div>
         </div>
 
-        {selectedMode === 'TRANSIT' && (
-          <div className="mt-3 space-y-3">
-            <div className="p-3 bg-info/10 rounded-lg border border-info/20">
-              <div className="flex items-center gap-2 text-info text-sm">
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <span>
-                  Transit routes include public transportation like buses, trains,
-                  and walking segments.
-                </span>
-              </div>
+        {onDepartureTimeChange && (
+          <div className="p-3 bg-base-200/50 rounded-lg border border-base-300/50">
+            <div className="flex items-center gap-3">
+              <svg
+                className="w-4 h-4 text-base-content/70"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <label className="text-sm font-medium text-base-content/80">
+                Departure Time:
+              </label>
+              <input
+                type="time"
+                value={displayTime}
+                onChange={(e) => onDepartureTimeChange(e.target.value)}
+                className="input input-sm input-bordered bg-base-100"
+              />
+              <button
+                onClick={() => onDepartureTimeChange(currentTime)}
+                className="btn btn-xs btn-ghost"
+              >
+                Now
+              </button>
             </div>
-            
-            {onDepartureTimeChange && (
-              <div className="p-3 bg-base-200/50 rounded-lg border border-base-300/50">
-                <div className="flex items-center gap-3">
-                  <svg
-                    className="w-4 h-4 text-base-content/70"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <label className="text-sm font-medium text-base-content/80">
-                    Departure Time:
-                  </label>
-                  <input
-                    type="time"
-                    value={displayTime}
-                    onChange={(e) => onDepartureTimeChange(e.target.value)}
-                    className="input input-sm input-bordered bg-base-100"
-                  />
-                  <button
-                    onClick={() => onDepartureTimeChange(currentTime)}
-                    className="btn btn-xs btn-ghost"
-                  >
-                    Now
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>

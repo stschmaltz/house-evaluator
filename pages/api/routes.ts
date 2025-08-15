@@ -12,8 +12,7 @@ interface RouteRequest {
     location?: { lat: number; lng: number };
     name?: string;
   }>;
-  travelMode?: 'DRIVE' | 'TRANSIT';
-  routingPreference?: string;
+  departureTime?: string;
 }
 
 interface TransitDetails {
@@ -41,7 +40,7 @@ interface RouteResponse {
     duration: string;
     distance: string;
     polyline?: string;
-    travelMode: 'DRIVE' | 'TRANSIT';
+    travelMode: 'DRIVE' | 'TRANSIT' | 'WALK' | 'BICYCLE';
     transitDetails?: TransitDetails;
   }>;
 }
@@ -55,12 +54,7 @@ export default async function handler(
   }
 
   try {
-    const {
-      origin,
-      destinations,
-      travelMode = 'DRIVE',
-      routingPreference,
-    }: RouteRequest = req.body;
+    const { origin, destinations, departureTime }: RouteRequest = req.body;
 
     if (!origin || !destinations || destinations.length === 0) {
       return res.status(400).json({ error: 'Missing origin or destinations' });
@@ -71,57 +65,81 @@ export default async function handler(
       duration: string;
       distance: string;
       polyline?: string;
-      travelMode: 'DRIVE' | 'TRANSIT';
+      travelMode: 'DRIVE' | 'TRANSIT' | 'WALK' | 'BICYCLE';
       transitDetails?: TransitDetails;
     }> = [];
 
-    // Calculate routes to each destination individually using Routes API
-    for (const destination of destinations) {
-      try {
-        const routeResponse = await calculateRoute(
-          origin,
-          destination,
-          travelMode,
-          routingPreference,
-        );
+    // Calculate all travel modes in parallel for each destination
+    const travelModes: ('DRIVE' | 'TRANSIT' | 'WALK' | 'BICYCLE')[] = [
+      'DRIVE',
+      'TRANSIT',
+      'WALK',
+      'BICYCLE',
+    ];
 
-        if (routeResponse.multipleRoutes) {
-          // For transit with multiple route options
-          routeResponse.multipleRoutes.forEach((route: any, index: number) => {
-            routes.push({
-              destination: `${destination.name || destination.address || 'Unknown destination'}${routeResponse.multipleRoutes.length > 1 ? ` (Option ${index + 1})` : ''}`,
-              duration: route.duration,
-              distance: route.distance,
-              polyline: route.polyline,
-              travelMode,
-              transitDetails: route.transitDetails,
-            });
-          });
-        } else {
-          // For single route (driving)
-          routes.push({
-            destination:
-              destination.name || destination.address || 'Unknown destination',
-            duration: routeResponse.duration || 'Unknown',
-            distance: routeResponse.distance || 'Unknown',
-            polyline: routeResponse.polyline,
+    for (const destination of destinations) {
+      const modePromises = travelModes.map(async (travelMode) => {
+        try {
+          const routeResponse = await calculateRoute(
+            origin,
+            destination,
             travelMode,
-            transitDetails:
-              'transitDetails' in routeResponse
-                ? (routeResponse.transitDetails as TransitDetails)
-                : undefined,
-          });
+            departureTime,
+          );
+
+          if (routeResponse.multipleRoutes) {
+            // For transit with multiple route options
+            return routeResponse.multipleRoutes.map(
+              (route: any, index: number) => ({
+                destination: `${destination.name || destination.address || 'Unknown destination'}${routeResponse.multipleRoutes.length > 1 ? ` (Option ${index + 1})` : ''}`,
+                duration: route.duration,
+                distance: route.distance,
+                polyline: route.polyline,
+                travelMode,
+                transitDetails: route.transitDetails,
+              }),
+            );
+          } else {
+            // For single route (driving, walking, biking)
+            return [
+              {
+                destination:
+                  destination.name ||
+                  destination.address ||
+                  'Unknown destination',
+                duration: routeResponse.duration || 'Unknown',
+                distance: routeResponse.distance || 'Unknown',
+                polyline: routeResponse.polyline,
+                travelMode,
+                transitDetails:
+                  'transitDetails' in routeResponse
+                    ? (routeResponse.transitDetails as TransitDetails)
+                    : undefined,
+              },
+            ];
+          }
+        } catch (error) {
+          console.error(
+            `Error calculating ${travelMode} route to ${destination.name}:`,
+            error,
+          );
+          return [
+            {
+              destination:
+                destination.name ||
+                destination.address ||
+                'Unknown destination',
+              duration: 'Error calculating',
+              distance: 'Error calculating',
+              travelMode,
+            },
+          ];
         }
-      } catch (error) {
-        console.error(`Error calculating route to ${destination.name}:`, error);
-        routes.push({
-          destination:
-            destination.name || destination.address || 'Unknown destination',
-          duration: 'Error calculating',
-          distance: 'Error calculating',
-          travelMode,
-        });
-      }
+      });
+
+      // Wait for all travel modes to complete for this destination
+      const modeResults = await Promise.all(modePromises);
+      routes.push(...modeResults.flat());
     }
 
     res.status(200).json({ routes });
@@ -134,8 +152,8 @@ export default async function handler(
 async function calculateRoute(
   origin: RouteRequest['origin'],
   destination: RouteRequest['destinations'][0],
-  travelMode: 'DRIVE' | 'TRANSIT',
-  routingPreference?: string,
+  travelMode: 'DRIVE' | 'TRANSIT' | 'WALK' | 'BICYCLE',
+  departureTime?: string,
 ) {
   const requestBody: any = {
     origin: formatWaypoint(origin),
@@ -143,18 +161,28 @@ async function calculateRoute(
     travelMode,
   };
 
-  if (travelMode === 'DRIVE' && routingPreference) {
-    requestBody.routingPreference = routingPreference;
+  if (travelMode === 'DRIVE') {
+    requestBody.routingPreference = 'TRAFFIC_AWARE';
   }
 
   if (travelMode === 'TRANSIT') {
     requestBody.transitPreferences = {
       allowedTravelModes: ['BUS', 'SUBWAY', 'TRAIN', 'LIGHT_RAIL'],
     };
-    const now = new Date();
-    requestBody.departureTime = now.toISOString();
+
+    // Use provided departure time or current time
+    const timeToUse = departureTime
+      ? parseTimeToISO(departureTime)
+      : new Date().toISOString();
+    requestBody.departureTime = timeToUse;
+
     // Request up to 3 alternative routes for transit
     requestBody.computeAlternativeRoutes = true;
+  }
+
+  // For walking and biking, we can also set departure time for consistency
+  if ((travelMode === 'WALK' || travelMode === 'BICYCLE') && departureTime) {
+    requestBody.departureTime = parseTimeToISO(departureTime);
   }
 
   const fieldMask =
@@ -344,6 +372,15 @@ function parseTransitDetails(leg: any, travelAdvisory?: any): TransitDetails {
   }
 
   return transitDetails;
+}
+
+function parseTimeToISO(timeString: string): string {
+  const today = new Date();
+  const [hours, minutes] = timeString.split(':').map(Number);
+
+  today.setHours(hours, minutes, 0, 0);
+
+  return today.toISOString();
 }
 
 function deduplicateRoutes(routes: any[]): any[] {

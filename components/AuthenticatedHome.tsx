@@ -29,7 +29,7 @@ interface RouteResult {
   duration: string;
   distance: string;
   polyline?: string;
-  travelMode: 'DRIVE' | 'TRANSIT';
+  travelMode: 'DRIVE' | 'TRANSIT' | 'WALK' | 'BICYCLE';
   transitDetails?: TransitDetails;
 }
 
@@ -43,8 +43,6 @@ interface AuthenticatedHomeProps {
   routes?: RouteResult[];
   originAddress?: string;
   isCalculatingRoutes?: boolean;
-  travelMode: 'DRIVE' | 'TRANSIT';
-  onTravelModeChange: (mode: 'DRIVE' | 'TRANSIT') => void;
   departureTime?: string;
   onDepartureTimeChange?: (time: string) => void;
 }
@@ -55,8 +53,8 @@ export function AuthenticatedHome({
   routes = [],
   originAddress = '',
   isCalculatingRoutes = false,
-  travelMode,
-  onTravelModeChange,
+  departureTime,
+  onDepartureTimeChange,
 }: AuthenticatedHomeProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-base-100 to-secondary/10">
@@ -65,8 +63,8 @@ export function AuthenticatedHome({
 
         <div className="flex flex-col gap-4">
           <TravelModeSelector
-            selectedMode={travelMode}
-            onModeChange={onTravelModeChange}
+            departureTime={departureTime}
+            onDepartureTimeChange={onDepartureTimeChange}
           />
           <AddressInput onSubmit={onAddressSubmit} />
           {(routes.length > 0 || isCalculatingRoutes) && (

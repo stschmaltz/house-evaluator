@@ -22,7 +22,7 @@ interface RouteResult {
   duration: string;
   distance: string;
   polyline?: string;
-  travelMode: 'DRIVE' | 'TRANSIT';
+  travelMode: 'DRIVE' | 'TRANSIT' | 'WALK' | 'BICYCLE';
   transitDetails?: TransitDetails;
 }
 
@@ -44,30 +44,64 @@ function formatFare(fare?: {
 
 function getTransitEmoji(vehicleType?: string): string {
   if (!vehicleType) return '🚌';
-  
+
   const type = vehicleType.toLowerCase();
   if (type.includes('bus')) return '🚌';
   if (type.includes('subway') || type.includes('metro')) return '🚇';
   if (type.includes('train') || type.includes('rail')) return '🚆';
   if (type.includes('tram') || type.includes('light_rail')) return '🚋';
   if (type.includes('ferry')) return '⛴️';
-  
+
   return '🚌'; // Default to bus
 }
 
 function groupRoutesByLocation(routes: RouteResult[]) {
-  const grouped: { [key: string]: RouteResult[] } = {};
-  
-  routes.forEach(route => {
-    // Extract base destination name (remove "(Option X)" part)
+  const grouped: { [key: string]: { [key: string]: RouteResult[] } } = {};
+
+  routes.forEach((route) => {
+    // Group first by location, then by travel mode
     const baseName = route.destination.replace(/ \(Option \d+\)$/, '');
     if (!grouped[baseName]) {
-      grouped[baseName] = [];
+      grouped[baseName] = {};
     }
-    grouped[baseName].push(route);
+
+    if (!grouped[baseName][route.travelMode]) {
+      grouped[baseName][route.travelMode] = [];
+    }
+    grouped[baseName][route.travelMode].push(route);
   });
-  
+
   return grouped;
+}
+
+function getTravelModeEmoji(mode: string): string {
+  switch (mode) {
+    case 'DRIVE':
+      return '🚗';
+    case 'TRANSIT':
+      return '🚌';
+    case 'WALK':
+      return '🚶';
+    case 'BICYCLE':
+      return '🚴';
+    default:
+      return '🚗';
+  }
+}
+
+function getTravelModeName(mode: string): string {
+  switch (mode) {
+    case 'DRIVE':
+      return 'Driving';
+    case 'TRANSIT':
+      return 'Transit';
+    case 'WALK':
+      return 'Walking';
+    case 'BICYCLE':
+      return 'Biking';
+    default:
+      return mode;
+  }
 }
 
 export function RouteResults({
@@ -144,97 +178,138 @@ export function RouteResults({
           </div>
         </div>
 
-        <div className="space-y-4">
-          {Object.entries(groupRoutesByLocation(routes)).map(([locationName, locationRoutes], locationIndex) => (
-            <div key={locationName} className="space-y-2">
-              <h3 className="font-bold text-lg text-base-content flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-focus rounded-full flex items-center justify-center text-primary-content font-bold text-sm">
-                  {locationIndex + 1}
-                </div>
-                {locationName}
-              </h3>
-              <div className="space-y-2 ml-10">
-                {locationRoutes.map((route, routeIndex) => (
-                  <div
-                    key={routeIndex}
-                    className="bg-gradient-to-r from-base-200/50 to-base-300/30 rounded-lg p-3 border border-base-300/50 hover:shadow-md transition-all duration-200"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-4 text-sm text-base-content/70 mb-2">
-                          <span className="font-medium">{route.duration}</span>
-                          <span className="font-medium">{route.distance}</span>
-                          <span className="text-xs uppercase font-medium">
-                            {route.travelMode === 'TRANSIT' ? 'Transit' : 'Driving'}
-                          </span>
-                        </div>
-
-                        {route.travelMode === 'TRANSIT' && route.transitDetails && (
-                          <div className="flex flex-wrap gap-3 text-xs">
-                            {route.transitDetails.totalWalkingTime && (
-                              <span className="bg-secondary/20 text-secondary px-2 py-1 rounded">
-                                🚶 {route.transitDetails.totalWalkingTime}
-                              </span>
-                            )}
-                            {route.transitDetails.numberOfTransfers !== undefined && (
-                              <span className="bg-warning/20 text-warning px-2 py-1 rounded">
-                                🔄 {route.transitDetails.numberOfTransfers} transfer
-                                {route.transitDetails.numberOfTransfers !== 1
-                                  ? 's'
-                                  : ''}
-                              </span>
-                            )}
-                            {route.transitDetails.transitFare && (
-                              <span className="bg-accent/20 text-accent px-2 py-1 rounded">
-                                💰 {formatFare(route.transitDetails.transitFare)}
-                              </span>
-                            )}
-                            {route.transitDetails.transitSteps &&
-                              route.transitDetails.transitSteps.length > 0 && (
-                                <details className="group">
-                                  <summary className="bg-info/20 text-info px-2 py-1 rounded cursor-pointer hover:bg-info/30 transition-colors">
-                                    📋 Steps (
-                                    {route.transitDetails.transitSteps.length})
-                                  </summary>
-                                  <div className="mt-2 p-2 bg-base-100/50 rounded text-xs space-y-1">
-                                    {route.transitDetails.transitSteps.map(
-                                      (step, stepIndex) => (
-                                        <div
-                                          key={stepIndex}
-                                          className="flex items-center justify-between"
-                                        >
-                                          <span>
-                                            {step.mode === 'WALKING' ? '🚶' : getTransitEmoji(step.transitLineInfo?.vehicle)} {' '}
-                                            {step.mode === 'WALKING'
-                                              ? 'Walk'
-                                              : step.transitLineInfo?.lineName ||
-                                                'Transit'}
-                                            {step.transitLineInfo?.vehicle &&
-                                              ` (${step.transitLineInfo.vehicle})`}
-                                          </span>
-                                          <span className="text-base-content/60">
-                                            {step.duration}
-                                          </span>
-                                        </div>
-                                      ),
-                                    )}
-                                  </div>
-                                </details>
-                              )}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center ml-3">
-                        <div className="w-6 h-6 bg-gradient-to-br from-accent to-accent-focus rounded-full flex items-center justify-center text-accent-content font-bold text-sm">
-                          {routeIndex + 1}
-                        </div>
-                      </div>
-                    </div>
+        <div className="space-y-6">
+          {Object.entries(groupRoutesByLocation(routes)).map(
+            ([locationName, travelModeGroups], locationIndex) => (
+              <div key={locationName} className="space-y-3">
+                <h2 className="font-bold text-xl text-base-content flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-focus rounded-full flex items-center justify-center text-primary-content font-bold text-sm">
+                    {locationIndex + 1}
                   </div>
-                ))}
+                  <span>{locationName}</span>
+                </h2>
+
+                <div className="space-y-3 ml-6">
+                  {Object.entries(travelModeGroups).map(
+                    ([travelMode, modeRoutes]) => (
+                      <div key={travelMode}>
+                        {modeRoutes.map((route, routeIndex) => (
+                          <div
+                            key={routeIndex}
+                            className="flex items-center justify-between py-2 px-3 rounded-lg bg-base-200/30 hover:bg-base-200/50 transition-colors border-l-4 border-primary/30"
+                          >
+                            <div className="flex items-center gap-3 flex-1">
+                              <span className="text-lg">
+                                {getTravelModeEmoji(travelMode)}
+                              </span>
+
+                              <div className="flex items-center gap-4 min-w-0 flex-1">
+                                <span className="font-medium text-sm">
+                                  {getTravelModeName(travelMode)}
+                                </span>
+                                <span className="font-medium text-sm text-primary">
+                                  {route.duration}
+                                </span>
+                                <span className="text-sm text-base-content/60">
+                                  {route.distance}
+                                </span>
+
+                                {route.travelMode === 'TRANSIT' &&
+                                  route.transitDetails && (
+                                    <div className="flex items-center gap-2 text-xs">
+                                      {route.transitDetails
+                                        .totalWalkingTime && (
+                                        <span className="bg-secondary/15 text-secondary px-1.5 py-0.5 rounded text-xs">
+                                          🚶{' '}
+                                          {
+                                            route.transitDetails
+                                              .totalWalkingTime
+                                          }
+                                        </span>
+                                      )}
+                                      {route.transitDetails
+                                        .numberOfTransfers !== undefined && (
+                                        <span className="bg-warning/15 text-warning px-1.5 py-0.5 rounded text-xs">
+                                          🔄{' '}
+                                          {
+                                            route.transitDetails
+                                              .numberOfTransfers
+                                          }
+                                        </span>
+                                      )}
+                                      {route.transitDetails.transitFare && (
+                                        <span className="bg-accent/15 text-accent px-1.5 py-0.5 rounded text-xs">
+                                          💰{' '}
+                                          {formatFare(
+                                            route.transitDetails.transitFare,
+                                          )}
+                                        </span>
+                                      )}
+                                      {route.transitDetails.transitSteps &&
+                                        route.transitDetails.transitSteps
+                                          .length > 0 && (
+                                          <details className="group inline">
+                                            <summary className="bg-info/15 text-info px-1.5 py-0.5 rounded cursor-pointer hover:bg-info/25 transition-colors text-xs inline">
+                                              📋{' '}
+                                              {
+                                                route.transitDetails
+                                                  .transitSteps.length
+                                              }
+                                            </summary>
+                                            <div className="absolute z-10 mt-1 p-2 bg-base-100 rounded-lg shadow-lg border text-xs min-w-64">
+                                              <div className="space-y-1">
+                                                {route.transitDetails.transitSteps.map(
+                                                  (step, stepIndex) => (
+                                                    <div
+                                                      key={stepIndex}
+                                                      className="flex items-center justify-between"
+                                                    >
+                                                      <span>
+                                                        {step.mode === 'WALKING'
+                                                          ? '🚶'
+                                                          : getTransitEmoji(
+                                                              step
+                                                                .transitLineInfo
+                                                                ?.vehicle,
+                                                            )}{' '}
+                                                        {step.mode === 'WALKING'
+                                                          ? 'Walk'
+                                                          : step.transitLineInfo
+                                                              ?.lineName ||
+                                                            'Transit'}
+                                                        {step.transitLineInfo
+                                                          ?.vehicle &&
+                                                          ` (${step.transitLineInfo.vehicle})`}
+                                                      </span>
+                                                      <span className="text-base-content/60">
+                                                        {step.duration}
+                                                      </span>
+                                                    </div>
+                                                  ),
+                                                )}
+                                              </div>
+                                            </div>
+                                          </details>
+                                        )}
+                                    </div>
+                                  )}
+                              </div>
+                            </div>
+
+                            {modeRoutes.length > 1 && (
+                              <div className="w-5 h-5 bg-primary/20 text-primary rounded-full flex items-center justify-center text-xs font-bold ml-2">
+                                {routeIndex + 1}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ),
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            ),
+          )}
         </div>
       </div>
     </div>

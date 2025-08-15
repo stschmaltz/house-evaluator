@@ -30,7 +30,7 @@ interface RouteResult {
   duration: string;
   distance: string;
   polyline?: string;
-  travelMode: 'DRIVE' | 'TRANSIT';
+  travelMode: 'DRIVE' | 'TRANSIT' | 'WALK' | 'BICYCLE';
   transitDetails?: TransitDetails;
 }
 
@@ -51,7 +51,7 @@ export default function Home() {
   const [routes, setRoutes] = useState<RouteResult[]>([]);
   const [originAddress, setOriginAddress] = useState('');
   const [isCalculatingRoutes, setIsCalculatingRoutes] = useState(false);
-  const [travelMode, setTravelMode] = useState<'DRIVE' | 'TRANSIT'>('DRIVE');
+
   const [departureTime, setDepartureTime] = useState<string>('');
 
   const handleAddressSubmit = async (addressData: {
@@ -74,10 +74,7 @@ export default function Home() {
         body: JSON.stringify({
           origin: addressData,
           destinations: DEFAULT_DESTINATIONS,
-          travelMode,
-          routingPreference:
-            travelMode === 'DRIVE' ? 'TRAFFIC_AWARE' : undefined,
-          departureTime: travelMode === 'TRANSIT' && departureTime ? departureTime : undefined,
+          departureTime: departureTime || undefined,
         }),
       });
 
@@ -111,8 +108,6 @@ export default function Home() {
         routes={routes}
         originAddress={originAddress}
         isCalculatingRoutes={isCalculatingRoutes}
-        travelMode={travelMode}
-        onTravelModeChange={setTravelMode}
         departureTime={departureTime}
         onDepartureTimeChange={setDepartureTime}
       />
