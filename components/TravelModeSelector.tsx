@@ -50,7 +50,7 @@ export function TravelModeSelector({
               />
             </svg>
             <span>
-              We'll show routes for driving 🚗, transit 🚌, walking 🚶, and
+              We&apos;ll show routes for driving 🚗, transit 🚌, walking 🚶, and
               biking 🚴 all at once!
             </span>
           </div>

@@ -22,14 +22,15 @@ export function AddressInput({ onSubmit }: AddressInputProps) {
   useEffect(() => {
     if (!inputRef.current || !window.google?.maps?.places) return;
 
-    autocompleteRef.current = new window.google.maps.places.Autocomplete(
-      inputRef.current,
-      {
-        types: ['address'],
-        componentRestrictions: { country: 'ca' },
-        fields: ['place_id', 'formatted_address', 'geometry.location'],
-      },
-    );
+    autocompleteRef.current =
+      new window.google.maps.places.Autocomplete(
+        inputRef.current,
+        {
+          types: ['address'],
+          componentRestrictions: { country: 'ca' },
+          fields: ['place_id', 'formatted_address', 'geometry.location'],
+        },
+      ) as unknown as google.maps.places.Autocomplete;
 
     const handlePlaceSelect = () => {
       const place = autocompleteRef.current?.getPlace();

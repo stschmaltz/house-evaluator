@@ -1,6 +1,18 @@
 import { useEffect } from 'react';
 import { logger } from '../lib/logger';
 
+interface Workbox {
+  addEventListener(type: string, handler: (event: unknown) => void): void;
+  messageSkipWaiting(): void;
+  register(): void;
+}
+
+declare global {
+  interface Window {
+    workbox?: Workbox;
+  }
+}
+
 function usePWASetup() {
   useEffect(() => {
     if (

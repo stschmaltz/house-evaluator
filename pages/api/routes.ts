@@ -34,6 +34,46 @@ interface TransitDetails {
   }>;
 }
 
+interface RouteData {
+  duration: string;
+  distance: string;
+  polyline?: string;
+  transitDetails?: TransitDetails;
+}
+
+type CalculateRouteResult = RouteData | { multipleRoutes: RouteData[] };
+
+interface GoogleTravelAdvisory {
+  transitFare?: { currencyCode: string; units: string; nanos?: number };
+}
+
+interface GoogleLegStep {
+  travelMode: 'WALK' | 'TRANSIT';
+  staticDuration?: string;
+  duration?: string;
+  transitDetails?: {
+    transitLine?: {
+      vehicle?: { type?: string };
+      name?: string;
+      color?: string;
+    };
+  };
+}
+
+interface GoogleLeg {
+  steps?: GoogleLegStep[];
+}
+
+interface GoogleRoute {
+  duration?: string;
+  distanceMeters?: number;
+  polyline?: { encodedPolyline?: string };
+  legs?: GoogleLeg[];
+  travelAdvisory?: GoogleTravelAdvisory;
+}
+
+type TransitStep = NonNullable<TransitDetails['transitSteps']>[number];
+
 interface RouteResponse {
   routes: Array<{
     destination: string;
@@ -87,10 +127,10 @@ export default async function handler(
             departureTime,
           );
 
-          if (routeResponse.multipleRoutes) {
+          if ('multipleRoutes' in routeResponse) {
             // For transit with multiple route options
             return routeResponse.multipleRoutes.map(
-              (route: any, index: number) => ({
+              (route: RouteData, index: number) => ({
                 destination: `${destination.name || destination.address || 'Unknown destination'}${routeResponse.multipleRoutes.length > 1 ? ` (Option ${index + 1})` : ''}`,
                 duration: route.duration,
                 distance: route.distance,
@@ -149,17 +189,17 @@ export default async function handler(
   }
 }
 
-async function calculateRoute(
-  origin: RouteRequest['origin'],
-  destination: RouteRequest['destinations'][0],
-  travelMode: 'DRIVE' | 'TRANSIT' | 'WALK' | 'BICYCLE',
-  departureTime?: string,
-) {
-  const requestBody: any = {
-    origin: formatWaypoint(origin),
-    destination: formatWaypoint(destination),
-    travelMode,
-  };
+  async function calculateRoute(
+    origin: RouteRequest['origin'],
+    destination: RouteRequest['destinations'][0],
+    travelMode: 'DRIVE' | 'TRANSIT' | 'WALK' | 'BICYCLE',
+    departureTime?: string,
+  ): Promise<CalculateRouteResult> {
+    const requestBody: Record<string, unknown> = {
+      origin: formatWaypoint(origin),
+      destination: formatWaypoint(destination),
+      travelMode,
+    };
 
   if (travelMode === 'DRIVE') {
     requestBody.routingPreference = 'TRAFFIC_AWARE';
@@ -219,14 +259,14 @@ async function calculateRoute(
   if (data.routes && data.routes.length > 0) {
     if (travelMode === 'TRANSIT') {
       // Return up to 3 transit route alternatives
-      const routes = data.routes
-        .slice(0, 3)
-        .map((route: any, index: number) => ({
-          duration: formatDuration(route.duration) || 'Unknown',
-          distance: route.distanceMeters
-            ? `${(route.distanceMeters / 1000).toFixed(1)} km`
-            : 'Unknown',
-          polyline: route.polyline?.encodedPolyline,
+        const routes: RouteData[] = data.routes
+          .slice(0, 3)
+          .map((route: GoogleRoute) => ({
+            duration: formatDuration(route.duration) || 'Unknown',
+            distance: route.distanceMeters
+              ? `${(route.distanceMeters / 1000).toFixed(1)} km`
+              : 'Unknown',
+            polyline: route.polyline?.encodedPolyline,
           transitDetails:
             route.legs && route.legs.length > 0
               ? parseTransitDetails(route.legs[0], route.travelAdvisory)
@@ -299,17 +339,20 @@ function formatWaypoint(location: {
   throw new Error('Invalid waypoint format');
 }
 
-function parseTransitDetails(leg: any, travelAdvisory?: any): TransitDetails {
-  const transitDetails: TransitDetails = {};
+  function parseTransitDetails(
+    leg: GoogleLeg,
+    travelAdvisory?: GoogleTravelAdvisory,
+  ): TransitDetails {
+    const transitDetails: TransitDetails = {};
 
   if (travelAdvisory?.transitFare) {
     transitDetails.transitFare = travelAdvisory.transitFare;
   }
 
-  if (leg.steps) {
-    let walkingTime = 0;
-    let transfers = 0;
-    const transitSteps: any[] = [];
+    if (leg.steps) {
+      let walkingTime = 0;
+      let transfers = 0;
+      const transitSteps: TransitStep[] = [];
 
     // Merge consecutive walking steps
     let currentWalkingDuration = 0;
@@ -383,21 +426,21 @@ function parseTimeToISO(timeString: string): string {
   return today.toISOString();
 }
 
-function deduplicateRoutes(routes: any[]): any[] {
-  const seen = new Set<string>();
+  function deduplicateRoutes(routes: RouteData[]): RouteData[] {
+    const seen = new Set<string>();
 
-  return routes.filter((route) => {
+    return routes.filter((route) => {
     // Create a signature based on key characteristics
     const signature = [
       route.duration,
       route.transitDetails?.totalWalkingTime || '',
       route.transitDetails?.numberOfTransfers || 0,
-      route.transitDetails?.transitSteps
-        ?.map((step: any) =>
-          step.mode === 'WALKING' ? 'WALK' : step.transitLineInfo?.lineName,
-        )
-        .join('|') || '',
-    ].join('::');
+        route.transitDetails?.transitSteps
+          ?.map((step: TransitStep) =>
+            step.mode === 'WALKING' ? 'WALK' : step.transitLineInfo?.lineName,
+          )
+          .join('|') || '',
+      ].join('::');
 
     if (seen.has(signature)) {
       return false; // Duplicate found
