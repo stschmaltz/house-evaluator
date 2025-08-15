@@ -6,11 +6,18 @@ import { appContainer } from '../../container/inversify.config';
 import { TYPES } from '../../container/types';
 import { ContextBuilder } from '../../lib/graphql-context';
 import { UserRepositoryInterface } from '../../repositories/user/user.repository.interface';
+import { EvaluationRepositoryInterface } from '../../repositories/evaluation/evaluation.repository.interface';
 
 const userRepository = appContainer.get<UserRepositoryInterface>(
   TYPES.UserRepository,
 );
-const contextBuilder = new ContextBuilder(userRepository);
+const evaluationRepository = appContainer.get<EvaluationRepositoryInterface>(
+  TYPES.EvaluationRepository,
+);
+const contextBuilder = new ContextBuilder(
+  userRepository,
+  evaluationRepository,
+);
 
 export default createYoga<{
   req: NextApiRequest;

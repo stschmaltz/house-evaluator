@@ -1,4 +1,11 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { appContainer } from '../../container/inversify.config';
+import { TYPES } from '../../container/types';
+import { EvaluationRepositoryInterface } from '../../repositories/evaluation/evaluation.repository.interface';
+
+const evaluationRepository = appContainer.get<EvaluationRepositoryInterface>(
+  TYPES.EvaluationRepository,
+);
 
 interface RouteRequest {
   origin: {
@@ -182,6 +189,27 @@ export default async function handler(
       // Wait for all travel modes to complete for this destination
       const modeResults = await Promise.all(modePromises);
       routes.push(...modeResults.flat());
+    }
+    const originAddress =
+      origin.address ||
+      origin.placeId ||
+      (origin.location
+        ? `${origin.location.lat},${origin.location.lng}`
+        : 'unknown');
+    try {
+      const routesToSave = routes.map((r) => ({
+        destination: r.destination,
+        duration: r.duration,
+        distance: r.distance,
+        travelMode: r.travelMode,
+        polyline: r.polyline,
+        transitDetails: r.transitDetails
+          ? JSON.stringify(r.transitDetails)
+          : undefined,
+      }));
+      await evaluationRepository.saveEvaluation(originAddress, routesToSave);
+    } catch (err) {
+      console.error('Error saving evaluation', err);
     }
 
     res.status(200).json({ routes });

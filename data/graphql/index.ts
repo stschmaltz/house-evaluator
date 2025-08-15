@@ -5,6 +5,11 @@ import {
   userMutationTypeDefs,
   userMutationResolver,
 } from './user/user.mutation';
+import { evaluationTypeDefs } from './evaluation/evaluation.typedefs';
+import {
+  evaluationQueryTypeDefs,
+  evaluationQueryResolver,
+} from './evaluation/evaluation.query';
 
 const baseSchema = /* GraphQL */ `
   type Query
@@ -16,9 +21,11 @@ const typeDefs = [
   userTypeDefs,
   userQueryTypeDefs,
   userMutationTypeDefs,
+  evaluationTypeDefs,
+  evaluationQueryTypeDefs,
 ];
 
-const resolvers = [userQueryResolver, userMutationResolver];
+const resolvers = [userQueryResolver, userMutationResolver, evaluationQueryResolver];
 
 const schema = makeExecutableSchema({
   typeDefs,
