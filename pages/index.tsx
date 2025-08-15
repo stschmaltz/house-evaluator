@@ -107,7 +107,7 @@ export default function Home() {
   };
 
   if (isSigningIn) {
-    return <LoadingState isLoading={false} isSigningIn={isSigningIn} />;
+    return <LoadingState isLoading={false} />;
   }
 
   if (error) {
