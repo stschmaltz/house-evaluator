@@ -17,12 +17,14 @@ interface TransitDetails {
   }>;
 }
 
+type TravelMode = 'DRIVE' | 'TRANSIT' | 'WALK' | 'BICYCLE';
+
 interface RouteResult {
   destination: string;
   duration: string;
   distance: string;
   polyline?: string;
-  travelMode: 'DRIVE' | 'TRANSIT' | 'WALK' | 'BICYCLE';
+  travelMode: TravelMode;
   transitDetails?: TransitDetails;
 }
 
@@ -70,52 +72,37 @@ function getTransitEmoji(vehicleType?: string): string {
 }
 
 function groupRoutesByLocation(routes: RouteResult[]) {
-  const grouped: { [key: string]: { [key: string]: RouteResult[] } } = {};
+  const grouped: Record<string, Record<TravelMode, RouteResult[]>> = {};
 
-  routes.forEach((route) => {
-    // Group first by location, then by travel mode
+  for (const route of routes) {
     const baseName = route.destination.replace(/ \(Option \d+\)$/, '');
-    if (!grouped[baseName]) {
-      grouped[baseName] = {};
-    }
-
-    if (!grouped[baseName][route.travelMode]) {
-      grouped[baseName][route.travelMode] = [];
-    }
+    (grouped[baseName] ??= {})[route.travelMode] ??= [];
     grouped[baseName][route.travelMode].push(route);
-  });
+  }
 
   return grouped;
 }
 
-function getTravelModeEmoji(mode: string): string {
-  switch (mode) {
-    case 'DRIVE':
-      return '🚗';
-    case 'TRANSIT':
-      return '🚌';
-    case 'WALK':
-      return '🚶';
-    case 'BICYCLE':
-      return '🚴';
-    default:
-      return '🚗';
-  }
+const TRAVEL_MODE_EMOJI: Record<TravelMode, string> = {
+  DRIVE: '🚗',
+  TRANSIT: '🚌',
+  WALK: '🚶',
+  BICYCLE: '🚴',
+};
+
+function getTravelModeEmoji(mode: TravelMode): string {
+  return TRAVEL_MODE_EMOJI[mode] ?? '🚗';
 }
 
-function getTravelModeName(mode: string): string {
-  switch (mode) {
-    case 'DRIVE':
-      return 'Driving';
-    case 'TRANSIT':
-      return 'Transit';
-    case 'WALK':
-      return 'Walking';
-    case 'BICYCLE':
-      return 'Biking';
-    default:
-      return mode;
-  }
+const TRAVEL_MODE_NAME: Record<TravelMode, string> = {
+  DRIVE: 'Driving',
+  TRANSIT: 'Transit',
+  WALK: 'Walking',
+  BICYCLE: 'Biking',
+};
+
+function getTravelModeName(mode: TravelMode): string {
+  return TRAVEL_MODE_NAME[mode] ?? mode;
 }
 
 export function RouteResults({

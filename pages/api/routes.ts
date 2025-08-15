@@ -1,5 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
+type TravelMode = 'DRIVE' | 'TRANSIT' | 'WALK' | 'BICYCLE';
+
 interface RouteRequest {
   origin: {
     address?: string;
@@ -82,7 +84,7 @@ interface RouteResponse {
     duration: string;
     distance: string;
     polyline?: string;
-    travelMode: 'DRIVE' | 'TRANSIT' | 'WALK' | 'BICYCLE';
+    travelMode: TravelMode;
     transitDetails?: TransitDetails;
   }>;
 }
@@ -107,17 +109,12 @@ export default async function handler(
       duration: string;
       distance: string;
       polyline?: string;
-      travelMode: 'DRIVE' | 'TRANSIT' | 'WALK' | 'BICYCLE';
+      travelMode: TravelMode;
       transitDetails?: TransitDetails;
     }> = [];
 
     // Calculate all travel modes in parallel for each destination
-    const travelModes: ('DRIVE' | 'TRANSIT' | 'WALK' | 'BICYCLE')[] = [
-      'DRIVE',
-      'TRANSIT',
-      'WALK',
-      'BICYCLE',
-    ];
+    const travelModes: TravelMode[] = ['DRIVE', 'TRANSIT', 'WALK', 'BICYCLE'];
 
     for (const destination of destinations) {
       const modePromises = travelModes.map(async (travelMode) => {
@@ -194,7 +191,7 @@ export default async function handler(
 async function calculateRoute(
   origin: RouteRequest['origin'],
   destination: RouteRequest['destinations'][0],
-  travelMode: 'DRIVE' | 'TRANSIT' | 'WALK' | 'BICYCLE',
+  travelMode: TravelMode,
   departureTime?: string,
 ) {
   const requestBody: Record<string, unknown> = {
@@ -345,78 +342,66 @@ function parseTransitDetails(
   leg: Leg,
   travelAdvisory?: TravelAdvisory,
 ): TransitDetails {
-  const transitDetails: TransitDetails = {};
+  const details: TransitDetails = {};
 
   if (travelAdvisory?.transitFare) {
-    transitDetails.transitFare = travelAdvisory.transitFare;
+    details.transitFare = travelAdvisory.transitFare;
   }
 
-  if (leg.steps) {
-    let walkingTime = 0;
-    let transfers = 0;
-    const transitSteps: TransitStep[] = [];
+  const steps = leg.steps;
+  if (!steps) return details;
 
-    // Merge consecutive walking steps
-    let currentWalkingDuration = 0;
+  let walkingTime = 0;
+  let transfers = 0;
+  const transitSteps: TransitStep[] = [];
+  let walkingAccumulator = 0;
 
-    for (let i = 0; i < leg.steps.length; i++) {
-      const step = leg.steps[i];
+  const parseSeconds = (duration?: string) =>
+    parseInt(duration?.replace('s', '') || '0', 10);
 
-      if (step.travelMode === 'WALK') {
-        const stepDuration = parseInt(
-          step.staticDuration?.replace('s', '') ||
-            step.duration?.replace('s', '') ||
-            '0',
-        );
-        walkingTime += stepDuration;
-        currentWalkingDuration += stepDuration;
+  for (const [idx, step] of steps.entries()) {
+    if (step.travelMode === 'WALK') {
+      const stepDuration = parseSeconds(step.staticDuration || step.duration);
+      walkingTime += stepDuration;
+      walkingAccumulator += stepDuration;
 
-        // Check if next step is also walking
-        const nextStep = leg.steps[i + 1];
-        const isLastStep = i === leg.steps.length - 1;
-        const nextIsWalking = nextStep && nextStep.travelMode === 'WALK';
-
-        // Only add walking step if this is the last walking step in a sequence
-        if (!nextIsWalking || isLastStep) {
-          if (currentWalkingDuration > 0) {
-            transitSteps.push({
-              mode: 'WALKING',
-              duration: formatDuration(`${currentWalkingDuration}s`),
-            });
-          }
-          currentWalkingDuration = 0;
-        }
-      } else if (step.travelMode === 'TRANSIT') {
-        transfers++;
+      if (steps[idx + 1]?.travelMode !== 'WALK') {
         transitSteps.push({
-          mode: 'TRANSIT',
-          duration: formatDuration(
-            step.staticDuration || step.duration || '0s',
-          ),
-          transitLineInfo: step.transitDetails
-            ? {
-                vehicle:
-                  step.transitDetails.transitLine?.vehicle?.type || 'Unknown',
-                lineName: step.transitDetails.transitLine?.name || 'Unknown',
-                lineColor: step.transitDetails.transitLine?.color,
-              }
-            : undefined,
+          mode: 'WALKING',
+          duration: formatDuration(`${walkingAccumulator}s`),
         });
+        walkingAccumulator = 0;
       }
+    } else if (step.travelMode === 'TRANSIT') {
+      transfers++;
+      transitSteps.push({
+        mode: 'TRANSIT',
+        duration: formatDuration(
+          step.staticDuration || step.duration || '0s',
+        ),
+        transitLineInfo: step.transitDetails
+          ? {
+              vehicle:
+                step.transitDetails.transitLine?.vehicle?.type || 'Unknown',
+              lineName: step.transitDetails.transitLine?.name || 'Unknown',
+              lineColor: step.transitDetails.transitLine?.color,
+            }
+          : undefined,
+      });
     }
-
-    if (walkingTime > 0) {
-      transitDetails.totalWalkingTime = formatDuration(`${walkingTime}s`);
-    }
-
-    if (transfers > 0) {
-      transitDetails.numberOfTransfers = Math.max(0, transfers - 1); // First transit doesn't count as transfer
-    }
-
-    transitDetails.transitSteps = transitSteps;
   }
 
-  return transitDetails;
+  if (walkingTime) {
+    details.totalWalkingTime = formatDuration(`${walkingTime}s`);
+  }
+
+  if (transfers) {
+    details.numberOfTransfers = Math.max(0, transfers - 1); // First transit doesn't count as transfer
+  }
+
+  details.transitSteps = transitSteps;
+
+  return details;
 }
 
 function parseTimeToISO(timeString: string): string {
