@@ -34,6 +34,17 @@ interface RouteResult {
   transitDetails?: TransitDetails;
 }
 
+function parseDurationToMinutes(duration: string): number {
+  const hourMatch = duration.match(/(\d+)h/);
+  const minuteMatch = duration.match(/(\d+)m/);
+  const hours = hourMatch ? parseInt(hourMatch[1], 10) : 0;
+  const minutes = minuteMatch ? parseInt(minuteMatch[1], 10) : 0;
+  if (!hourMatch && !minuteMatch) {
+    return 0;
+  }
+  return hours * 60 + minutes;
+}
+
 const DEFAULT_DESTINATIONS = [
   {
     name: 'Foothills',
@@ -83,7 +94,10 @@ export default function Home() {
       }
 
       const data = await response.json();
-      setRoutes(data.routes || []);
+      const filteredRoutes = (data.routes || []).filter(
+        (route: RouteResult) => parseDurationToMinutes(route.duration) <= 60,
+      );
+      setRoutes(filteredRoutes);
     } catch (error) {
       console.error('Error calculating routes:', error);
       setRoutes([]);
