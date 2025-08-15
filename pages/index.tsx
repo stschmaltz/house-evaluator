@@ -51,6 +51,8 @@ export default function Home() {
         body: JSON.stringify({
           origin: addressData,
           destinations: DEFAULT_DESTINATIONS,
+          travelMode: 'DRIVE',
+          routingPreference: 'TRAFFIC_AWARE',
         }),
       });
 
