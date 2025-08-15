@@ -1,9 +1,9 @@
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { useEffect, useState } from 'react';
 import { useCurrentUserContext } from '../context/UserContext';
-import { asyncFetch } from '../../data/graphql/graphql-fetcher';
-import { signInUserMutation } from '../../data/graphql/snippets/user';
-import { UserObject } from '../../types/user';
+import { asyncFetch } from '../data/graphql/graphql-fetcher';
+import { signInUserMutation } from '../data/graphql/snippets/user';
+import { UserObject } from '../types/user';
 
 interface UserSignInResponse {
   user: UserObject;
@@ -46,3 +46,4 @@ function useUserSignIn(): readonly [
 }
 
 export { useUserSignIn };
+

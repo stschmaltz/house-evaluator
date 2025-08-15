@@ -1,4 +1,4 @@
-const title = 'Example Template';
+const title = 'House Evaluator Template';
 const description =
   'A Next.js template with GraphQL, Auth0 authentication, MongoDB integration, and modern development tooling.';
 
@@ -10,7 +10,7 @@ module.exports = {
     type: 'website',
     locale: 'en_US',
     url: 'https://example.com/',
-    site_name: 'Example Template',
+    site_name: 'House Evaluator Template',
     title,
     description,
     images: [
@@ -18,7 +18,7 @@ module.exports = {
         url: 'https://example.com/images/share.png',
         width: 1200,
         height: 630,
-        alt: 'Example Template – Next.js starter with GraphQL and Auth0',
+        alt: 'House Evaluator Template – Next.js starter with GraphQL and Auth0',
       },
     ],
   },

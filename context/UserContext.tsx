@@ -1,6 +1,6 @@
 'use client';
 import { createContext, useContext, useState } from 'react';
-import { UserObject } from '../../types/user';
+import { UserObject } from '../types/user';
 
 const CurrentUserContext = createContext<{
   currentUser?: UserObject;
@@ -25,3 +25,4 @@ const CurrentUserProvider = (input: { children: React.ReactNode }) => {
 };
 
 export { CurrentUserProvider, CurrentUserContext, useCurrentUserContext };
+

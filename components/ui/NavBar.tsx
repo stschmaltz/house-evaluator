@@ -9,7 +9,9 @@ interface Props {
 const NavBar: React.FC<Props> = ({ router }) => {
   const isActive = (path: string) => router.pathname === path;
 
-  const navItems: { path: string; label: string; enabled: boolean }[] = [];
+  const navItems: { path: string; label: string; enabled: boolean }[] = [
+    { path: '/address-evaluator', label: 'Address Evaluator', enabled: true },
+  ];
 
   return (
     <nav className="relative">

@@ -8,10 +8,11 @@ import React, { ReactElement, ReactNode } from 'react';
 import { NextPage } from 'next';
 import SEO from '../next-seo.config';
 
-import { CurrentUserProvider } from '../src/context/UserContext';
+import { CurrentUserProvider } from '../context/UserContext';
 import { ThemeProvider } from '../context/ThemeContext';
 import { ProtectedLayout } from '../components/ProtectedLayout';
-import '../src/app/globals.css';
+import '../styles/global.css';
+import { usePWASetup } from '../hooks/use-pwa-setup.hook';
 
 type NextPageWithLayout = NextPage & {
   getLayout?: (page: ReactElement) => ReactNode;
@@ -22,6 +23,8 @@ type AppPropsWithLayout = AppProps & {
 };
 
 export default function App({ Component, pageProps }: AppPropsWithLayout) {
+  usePWASetup();
+
   const defaultLayout = (page: ReactElement) => (
     <UserProvider user={pageProps.user}>
       <ThemeProvider>
@@ -41,10 +44,10 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
           name="viewport"
           content="minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no, user-scalable=no, viewport-fit=cover"
         />
-        <title>Example App</title>
+        <title>House Evaluator App</title>
         <meta
           name="description"
-          content="Example Next.js application with authentication and theming"
+          content="House Evaluator Next.js application with authentication and theming"
         />
       </Head>
       <DefaultSeo {...SEO} />

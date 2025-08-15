@@ -1,88 +1,92 @@
 import { useUser } from '@auth0/nextjs-auth0/client';
-import Link from 'next/link';
-import { useUserSignIn } from '../src/hooks/use-user-sign-in.hook';
+import React, { useState } from 'react';
+import { useUserSignIn } from '../hooks/use-user-sign-in.hook';
+import { LoadingState } from '../components/LoadingState';
+import { ErrorState } from '../components/ErrorState';
+import { AuthenticatedHome } from '../components/AuthenticatedHome';
+import { LandingPage } from '../components/LandingPage';
+
+interface RouteResult {
+  destination: string;
+  duration: string;
+  distance: string;
+  polyline?: string;
+}
+
+const DEFAULT_DESTINATIONS = [
+  {
+    name: 'Foothills',
+    location: { lat: 51.06541940356553, lng: -114.13378879331637 },
+  },
+  {
+    name: 'Bottlescrews',
+    location: { lat: 51.043684917974744, lng: -114.06544900292467 },
+  },
+];
 
 export default function Home() {
-  const { user, isLoading, error } = useUser();
-  const [isSigningIn, currentUser, setCurrentUser] = useUserSignIn();
+  const { error } = useUser();
+  const [isSigningIn, currentUser] = useUserSignIn();
+  const [routes, setRoutes] = useState<RouteResult[]>([]);
+  const [originAddress, setOriginAddress] = useState('');
+  const [isCalculatingRoutes, setIsCalculatingRoutes] = useState(false);
 
-  if (isLoading || isSigningIn) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">
-          {isLoading ? 'Loading...' : 'Signing in...'}
-        </div>
-      </div>
-    );
+  const handleAddressSubmit = async (addressData: {
+    address: string;
+    placeId?: string;
+    location?: { lat: number; lng: number };
+  }) => {
+    if (!addressData.address.trim()) return;
+
+    setIsCalculatingRoutes(true);
+    setOriginAddress(addressData.address);
+    setRoutes([]);
+
+    try {
+      const response = await fetch('/api/routes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          origin: addressData,
+          destinations: DEFAULT_DESTINATIONS,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to calculate routes');
+      }
+
+      const data = await response.json();
+      setRoutes(data.routes || []);
+    } catch (error) {
+      console.error('Error calculating routes:', error);
+      setRoutes([]);
+    } finally {
+      setIsCalculatingRoutes(false);
+    }
+  };
+
+  if (isSigningIn) {
+    return <LoadingState isLoading={false} isSigningIn={isSigningIn} />;
   }
 
   if (error) {
+    return <ErrorState error={error} />;
+  }
+
+  if (currentUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-red-500">Error: {error.message}</div>
-      </div>
+      <AuthenticatedHome
+        currentUser={currentUser}
+        onAddressSubmit={handleAddressSubmit}
+        routes={routes}
+        originAddress={originAddress}
+        isCalculatingRoutes={isCalculatingRoutes}
+      />
     );
   }
 
-  if (user) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">
-            Welcome to Example Template
-          </h1>
-          <div className="space-y-4">
-            <div className="flex items-center space-x-4">
-              {user.picture && (
-                <img
-                  src={user.picture}
-                  alt="Profile"
-                  className="w-16 h-16 rounded-full"
-                />
-              )}
-              <div>
-                <p className="text-lg font-semibold text-gray-900">
-                  {user.name}
-                </p>
-                <p className="text-gray-600">{user.email}</p>
-                {currentUser && (
-                  <p className="text-sm text-green-600">
-                    ✓ Saved to database (ID: {currentUser._id.slice(-6)})
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="pt-4 border-t">
-              <Link
-                href="/api/auth/logout"
-                className="w-full bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition-colors block text-center"
-              >
-                Logout
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-[80vh] flex flex-col items-center justify-center p-8">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">
-          Example Template
-        </h1>
-        <p className="text-gray-600 mb-8">
-          A Next.js template with GraphQL, Auth0 authentication, and MongoDB
-          integration
-        </p>
-        <Link
-          href="/api/auth/login"
-          className="w-full bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-blue-600 transition-colors text-lg font-semibold block"
-        >
-          Login with Auth0
-        </Link>
-      </div>
-    </div>
-  );
+  return <LandingPage />;
 }

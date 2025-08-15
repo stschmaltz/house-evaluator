@@ -15,19 +15,20 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const getInitialTheme = (): string => {
   try {
-    return localStorage?.getItem('example-theme') || 'cupcake';
+    return localStorage?.getItem('house-evaluator-theme') || 'light';
   } catch (error) {
-    return 'cupcake';
+    return 'light';
   }
 };
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<string>(getInitialTheme);
+  // const [theme, setThemeState] = useState<string>(getInitialTheme);
+  const [theme, setThemeState] = useState<string>('light');
 
   useEffect(() => {
     try {
       document.documentElement.setAttribute('data-theme', theme);
-      localStorage.setItem('example-theme', theme);
+      localStorage.setItem('house-evaluator-theme', theme);
     } catch (error) {
       console.error('Failed to apply theme to DOM/localStorage', error);
     }

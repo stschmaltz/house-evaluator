@@ -6,7 +6,7 @@ import { NavBar } from './ui/NavBar';
 
 import { BottomNav } from './ui/BottomNav';
 import AccountMenu from './AccountMenu';
-import { useUserSignIn } from '../src/hooks/use-user-sign-in.hook';
+import { useUserSignIn } from '../hooks/use-user-sign-in.hook';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -34,10 +34,10 @@ function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col w-full">
       <Head>
-        <title>Example App</title>
+        <title>House Evaluator App</title>
         <meta
           name="description"
-          content="Example Next.js application with authentication and theming."
+          content="House Evaluator Next.js application with authentication and theming."
           key="desc"
         />
         <link rel="icon" href="/favicon.ico" sizes="any" />
@@ -46,20 +46,28 @@ function Layout({ children }: LayoutProps) {
         <link rel="manifest" href="/site.webmanifest" />
 
         <meta property="og:type" content="website" key="ogtype" />
-        <meta property="og:title" content="Example App" key="ogtitle" />
+        <meta property="og:title" content="House Evaluator App" key="ogtitle" />
         <meta
           property="og:description"
-          content="Example Next.js application with authentication and theming."
+          content="House Evaluator Next.js application with authentication and theming."
           key="ogdesc"
         />
         <meta property="og:image" content="/og-image.png" key="ogimage" />
-        <meta property="og:site_name" content="Example App" key="ogsitename" />
+        <meta
+          property="og:site_name"
+          content="House Evaluator App"
+          key="ogsitename"
+        />
 
         <meta name="twitter:card" content="summary_large_image" key="twcard" />
-        <meta name="twitter:title" content="Example App" key="twtitle" />
+        <meta
+          name="twitter:title"
+          content="House Evaluator App"
+          key="twtitle"
+        />
         <meta
           name="twitter:description"
-          content="Example Next.js application with authentication and theming."
+          content="House Evaluator Next.js application with authentication and theming."
           key="twdesc"
         />
         <meta name="twitter:image" content="/twitter-image.png" key="twimage" />
@@ -67,7 +75,9 @@ function Layout({ children }: LayoutProps) {
       <header className="sticky top-0 z-30 bg-primary text-white p-2">
         <div className="container mx-auto flex flex-wrap items-center justify-between">
           <Link href="/" className="flex items-center">
-            <h1 className="ml-2 text-xl md:text-2xl font-bold">Example App</h1>
+            <h1 className="ml-2 text-xl md:text-2xl font-bold">
+              House Evaluator App
+            </h1>
           </Link>
           <div className="flex items-center gap-2 md:gap-4">
             <NavBar router={router} />
@@ -97,7 +107,8 @@ function Layout({ children }: LayoutProps) {
       <footer className="p-4 pb-10 md:pb-4 bg-neutral text-neutral-content mb-16 md:mb-0">
         <div className="container mx-auto flex flex-col md:flex-row justify-between items-center text-sm">
           <div className="text-center md:text-left">
-            &copy; {new Date().getFullYear()} Example App. All rights reserved.
+            &copy; {new Date().getFullYear()} House Evaluator App. All rights
+            reserved.
           </div>
           <div className="flex gap-4 mt-2 md:mt-0">
             <Link href="/privacy" className="link link-hover">

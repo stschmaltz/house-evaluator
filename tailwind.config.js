@@ -1,8 +1,10 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    './src/app/**/*.{ts,tsx}',
-    './src/components/**/*.{ts,tsx}',
+    './pages/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    // If you're using the /app directory (Next.js App Router), also add:
+    // './app/**/*.{ts,tsx}',
   ],
   theme: {
     extend: {
@@ -17,7 +19,7 @@ module.exports = {
       },
     },
   },
-  plugins: [require('daisyui')],
+  plugins: [require('daisyui')], // add daisyUI as a plugin
   daisyui: {
     themes: [
       'light',

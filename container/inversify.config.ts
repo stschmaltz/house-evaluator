@@ -6,10 +6,10 @@ import { UserRepositoryInterface } from '../repositories/user/user.repository.in
 
 const appContainer = new Container();
 
-// Example binding
+// House Evaluator binding
 appContainer
   .bind<string>(TYPES.ExampleService)
-  .toConstantValue('Example Service');
+  .toConstantValue('House Evaluator Service');
 
 // UserRepository binding
 appContainer

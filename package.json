@@ -1,5 +1,5 @@
 {
-  "name": "example",
+  "name": "house-Evaluator",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -17,11 +17,15 @@
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^3.5.0",
+    "@googlemaps/routing": "^2.1.0",
     "@graphql-tools/schema": "^10.0.6",
+    "@heroicons/react": "^2.2.0",
+    "@react-google-maps/api": "^2.20.7",
+    "@tailwindcss/postcss": "^4.1.12",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
     "auth0": "^4.28.0",
-    "daisyui": "^4.12.23",
+    "daisyui": "^5.0.50",
     "graphql": "^16.11.0",
     "graphql-tools": "^9.0.20",
     "graphql-yoga": "5.15.1",
@@ -33,20 +37,20 @@
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "reflect-metadata": "^0.2.2",
+    "tailwindcss": "^4.1.12",
     "theme-change": "^2.5.0"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3",
     "@graphql-codegen/cli": "^5.0.6",
     "@graphql-codegen/typescript": "^4.1.6",
     "@graphql-codegen/typescript-operations": "^4.6.1",
     "@next/eslint-plugin-next": "^15.3.1",
-    "@typescript-eslint/eslint-plugin": "^8.31.0",
-    "@typescript-eslint/parser": "^8.31.0",
-    "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4.1.11",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@typescript-eslint/eslint-plugin": "^8.31.0",
+    "@typescript-eslint/parser": "^8.31.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^9",
     "eslint-config-next": "15.4.5",
@@ -58,7 +62,6 @@
     "next-sitemap": "^4.2.3",
     "postcss": "^8.4.49",
     "prettier": "^3.6.2",
-    "tailwindcss": "^4",
     "typescript": "^5"
   },
   "lint-staged": {
