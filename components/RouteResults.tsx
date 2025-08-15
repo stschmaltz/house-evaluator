@@ -42,6 +42,20 @@ function formatFare(fare?: {
   return `${fare.currencyCode} ${amount.toFixed(2)}`;
 }
 
+function parseDurationToMinutes(duration: string): number {
+  if (!duration) return Number.POSITIVE_INFINITY;
+  const hoursMatch = duration.match(/(\d+)h/);
+  const minutesMatch = duration.match(/(\d+)m/);
+  const hours = hoursMatch ? parseInt(hoursMatch[1], 10) : 0;
+  const minutes = minutesMatch ? parseInt(minutesMatch[1], 10) : 0;
+  if (!hoursMatch && !minutesMatch) return Number.POSITIVE_INFINITY;
+  return hours * 60 + minutes;
+}
+
+function getShortestDuration(routes: RouteResult[]): number {
+  return Math.min(...routes.map((r) => parseDurationToMinutes(r.duration)));
+}
+
 function getTransitEmoji(vehicleType?: string): string {
   if (!vehicleType) return '🚌';
 
@@ -190,10 +204,21 @@ export function RouteResults({
                 </h2>
 
                 <div className="space-y-3 ml-6">
-                  {Object.entries(travelModeGroups).map(
-                    ([travelMode, modeRoutes]) => (
+                  {Object.entries(travelModeGroups)
+                    .sort(
+                      ([, aRoutes], [, bRoutes]) =>
+                        getShortestDuration(aRoutes) -
+                        getShortestDuration(bRoutes),
+                    )
+                    .map(([travelMode, modeRoutes]) => (
                       <div key={travelMode}>
-                        {modeRoutes.map((route, routeIndex) => (
+                        {modeRoutes
+                          .sort(
+                            (a, b) =>
+                              parseDurationToMinutes(a.duration) -
+                              parseDurationToMinutes(b.duration),
+                          )
+                          .map((route, routeIndex) => (
                           <div
                             key={routeIndex}
                             className="flex items-center justify-between py-2 px-3 rounded-lg bg-base-200/30 hover:bg-base-200/50 transition-colors border-l-4 border-primary/30"
