@@ -29,7 +29,7 @@ export function AddressInput({ onSubmit }: AddressInputProps) {
         componentRestrictions: { country: 'ca' },
         fields: ['place_id', 'formatted_address', 'geometry.location'],
       },
-    );
+    ) as unknown as google.maps.places.Autocomplete;
 
     const handlePlaceSelect = () => {
       const place = autocompleteRef.current?.getPlace();
