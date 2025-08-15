@@ -3,12 +3,34 @@ import { UserObject } from '../types/user';
 import { Header } from './Header';
 import { AddressInput } from './AddressInput';
 import { RouteResults } from './RouteResults';
+import { TravelModeSelector } from './TravelModeSelector';
+
+interface TransitDetails {
+  totalWalkingTime?: string;
+  numberOfTransfers?: number;
+  transitFare?: {
+    currencyCode: string;
+    units: string;
+    nanos?: number;
+  };
+  transitSteps?: Array<{
+    mode: 'WALKING' | 'TRANSIT';
+    duration: string;
+    transitLineInfo?: {
+      vehicle: string;
+      lineName: string;
+      lineColor?: string;
+    };
+  }>;
+}
 
 interface RouteResult {
   destination: string;
   duration: string;
   distance: string;
   polyline?: string;
+  travelMode: 'DRIVE' | 'TRANSIT';
+  transitDetails?: TransitDetails;
 }
 
 interface AuthenticatedHomeProps {
@@ -21,6 +43,10 @@ interface AuthenticatedHomeProps {
   routes?: RouteResult[];
   originAddress?: string;
   isCalculatingRoutes?: boolean;
+  travelMode: 'DRIVE' | 'TRANSIT';
+  onTravelModeChange: (mode: 'DRIVE' | 'TRANSIT') => void;
+  departureTime?: string;
+  onDepartureTimeChange?: (time: string) => void;
 }
 
 export function AuthenticatedHome({
@@ -29,6 +55,8 @@ export function AuthenticatedHome({
   routes = [],
   originAddress = '',
   isCalculatingRoutes = false,
+  travelMode,
+  onTravelModeChange,
 }: AuthenticatedHomeProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-base-100 to-secondary/10">
@@ -36,6 +64,10 @@ export function AuthenticatedHome({
         <Header currentUser={currentUser} />
 
         <div className="flex flex-col gap-4">
+          <TravelModeSelector
+            selectedMode={travelMode}
+            onModeChange={onTravelModeChange}
+          />
           <AddressInput onSubmit={onAddressSubmit} />
           {(routes.length > 0 || isCalculatingRoutes) && (
             <RouteResults

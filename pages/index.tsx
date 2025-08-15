@@ -6,11 +6,32 @@ import { ErrorState } from '../components/ErrorState';
 import { AuthenticatedHome } from '../components/AuthenticatedHome';
 import { LandingPage } from '../components/LandingPage';
 
+interface TransitDetails {
+  totalWalkingTime?: string;
+  numberOfTransfers?: number;
+  transitFare?: {
+    currencyCode: string;
+    units: string;
+    nanos?: number;
+  };
+  transitSteps?: Array<{
+    mode: 'WALKING' | 'TRANSIT';
+    duration: string;
+    transitLineInfo?: {
+      vehicle: string;
+      lineName: string;
+      lineColor?: string;
+    };
+  }>;
+}
+
 interface RouteResult {
   destination: string;
   duration: string;
   distance: string;
   polyline?: string;
+  travelMode: 'DRIVE' | 'TRANSIT';
+  transitDetails?: TransitDetails;
 }
 
 const DEFAULT_DESTINATIONS = [
@@ -30,6 +51,8 @@ export default function Home() {
   const [routes, setRoutes] = useState<RouteResult[]>([]);
   const [originAddress, setOriginAddress] = useState('');
   const [isCalculatingRoutes, setIsCalculatingRoutes] = useState(false);
+  const [travelMode, setTravelMode] = useState<'DRIVE' | 'TRANSIT'>('DRIVE');
+  const [departureTime, setDepartureTime] = useState<string>('');
 
   const handleAddressSubmit = async (addressData: {
     address: string;
@@ -51,8 +74,10 @@ export default function Home() {
         body: JSON.stringify({
           origin: addressData,
           destinations: DEFAULT_DESTINATIONS,
-          travelMode: 'DRIVE',
-          routingPreference: 'TRAFFIC_AWARE',
+          travelMode,
+          routingPreference:
+            travelMode === 'DRIVE' ? 'TRAFFIC_AWARE' : undefined,
+          departureTime: travelMode === 'TRANSIT' && departureTime ? departureTime : undefined,
         }),
       });
 
@@ -86,6 +111,10 @@ export default function Home() {
         routes={routes}
         originAddress={originAddress}
         isCalculatingRoutes={isCalculatingRoutes}
+        travelMode={travelMode}
+        onTravelModeChange={setTravelMode}
+        departureTime={departureTime}
+        onDepartureTimeChange={setDepartureTime}
       />
     );
   }

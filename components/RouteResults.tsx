@@ -1,14 +1,73 @@
+interface TransitDetails {
+  totalWalkingTime?: string;
+  numberOfTransfers?: number;
+  transitFare?: {
+    currencyCode: string;
+    units: string;
+    nanos?: number;
+  };
+  transitSteps?: Array<{
+    mode: 'WALKING' | 'TRANSIT';
+    duration: string;
+    transitLineInfo?: {
+      vehicle: string;
+      lineName: string;
+      lineColor?: string;
+    };
+  }>;
+}
+
 interface RouteResult {
   destination: string;
   duration: string;
   distance: string;
   polyline?: string;
+  travelMode: 'DRIVE' | 'TRANSIT';
+  transitDetails?: TransitDetails;
 }
 
 interface RouteResultsProps {
   routes: RouteResult[];
   originAddress: string;
   isLoading?: boolean;
+}
+
+function formatFare(fare?: {
+  currencyCode: string;
+  units: string;
+  nanos?: number;
+}): string {
+  if (!fare) return '';
+  const amount = parseFloat(fare.units) + (fare.nanos || 0) / 1000000000;
+  return `${fare.currencyCode} ${amount.toFixed(2)}`;
+}
+
+function getTransitEmoji(vehicleType?: string): string {
+  if (!vehicleType) return '🚌';
+  
+  const type = vehicleType.toLowerCase();
+  if (type.includes('bus')) return '🚌';
+  if (type.includes('subway') || type.includes('metro')) return '🚇';
+  if (type.includes('train') || type.includes('rail')) return '🚆';
+  if (type.includes('tram') || type.includes('light_rail')) return '🚋';
+  if (type.includes('ferry')) return '⛴️';
+  
+  return '🚌'; // Default to bus
+}
+
+function groupRoutesByLocation(routes: RouteResult[]) {
+  const grouped: { [key: string]: RouteResult[] } = {};
+  
+  routes.forEach(route => {
+    // Extract base destination name (remove "(Option X)" part)
+    const baseName = route.destination.replace(/ \(Option \d+\)$/, '');
+    if (!grouped[baseName]) {
+      grouped[baseName] = [];
+    }
+    grouped[baseName].push(route);
+  });
+  
+  return grouped;
 }
 
 export function RouteResults({
@@ -86,56 +145,93 @@ export function RouteResults({
         </div>
 
         <div className="space-y-4">
-          {routes.map((route, index) => (
-            <div
-              key={index}
-              className="bg-gradient-to-r from-base-200/50 to-base-300/30 rounded-lg p-6 border border-base-300/50 hover:shadow-lg transition-all duration-200"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg text-base-content mb-2">
-                    {route.destination}
-                  </h3>
-                  <div className="flex items-center gap-6 text-sm text-base-content/70">
-                    <div className="flex items-center gap-2">
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      <span className="font-medium">{route.duration}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                        />
-                      </svg>
-                      <span className="font-medium">{route.distance}</span>
+          {Object.entries(groupRoutesByLocation(routes)).map(([locationName, locationRoutes], locationIndex) => (
+            <div key={locationName} className="space-y-2">
+              <h3 className="font-bold text-lg text-base-content flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-focus rounded-full flex items-center justify-center text-primary-content font-bold text-sm">
+                  {locationIndex + 1}
+                </div>
+                {locationName}
+              </h3>
+              <div className="space-y-2 ml-10">
+                {locationRoutes.map((route, routeIndex) => (
+                  <div
+                    key={routeIndex}
+                    className="bg-gradient-to-r from-base-200/50 to-base-300/30 rounded-lg p-3 border border-base-300/50 hover:shadow-md transition-all duration-200"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-4 text-sm text-base-content/70 mb-2">
+                          <span className="font-medium">{route.duration}</span>
+                          <span className="font-medium">{route.distance}</span>
+                          <span className="text-xs uppercase font-medium">
+                            {route.travelMode === 'TRANSIT' ? 'Transit' : 'Driving'}
+                          </span>
+                        </div>
+
+                        {route.travelMode === 'TRANSIT' && route.transitDetails && (
+                          <div className="flex flex-wrap gap-3 text-xs">
+                            {route.transitDetails.totalWalkingTime && (
+                              <span className="bg-secondary/20 text-secondary px-2 py-1 rounded">
+                                🚶 {route.transitDetails.totalWalkingTime}
+                              </span>
+                            )}
+                            {route.transitDetails.numberOfTransfers !== undefined && (
+                              <span className="bg-warning/20 text-warning px-2 py-1 rounded">
+                                🔄 {route.transitDetails.numberOfTransfers} transfer
+                                {route.transitDetails.numberOfTransfers !== 1
+                                  ? 's'
+                                  : ''}
+                              </span>
+                            )}
+                            {route.transitDetails.transitFare && (
+                              <span className="bg-accent/20 text-accent px-2 py-1 rounded">
+                                💰 {formatFare(route.transitDetails.transitFare)}
+                              </span>
+                            )}
+                            {route.transitDetails.transitSteps &&
+                              route.transitDetails.transitSteps.length > 0 && (
+                                <details className="group">
+                                  <summary className="bg-info/20 text-info px-2 py-1 rounded cursor-pointer hover:bg-info/30 transition-colors">
+                                    📋 Steps (
+                                    {route.transitDetails.transitSteps.length})
+                                  </summary>
+                                  <div className="mt-2 p-2 bg-base-100/50 rounded text-xs space-y-1">
+                                    {route.transitDetails.transitSteps.map(
+                                      (step, stepIndex) => (
+                                        <div
+                                          key={stepIndex}
+                                          className="flex items-center justify-between"
+                                        >
+                                          <span>
+                                            {step.mode === 'WALKING' ? '🚶' : getTransitEmoji(step.transitLineInfo?.vehicle)} {' '}
+                                            {step.mode === 'WALKING'
+                                              ? 'Walk'
+                                              : step.transitLineInfo?.lineName ||
+                                                'Transit'}
+                                            {step.transitLineInfo?.vehicle &&
+                                              ` (${step.transitLineInfo.vehicle})`}
+                                          </span>
+                                          <span className="text-base-content/60">
+                                            {step.duration}
+                                          </span>
+                                        </div>
+                                      ),
+                                    )}
+                                  </div>
+                                </details>
+                              )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center ml-3">
+                        <div className="w-6 h-6 bg-gradient-to-br from-accent to-accent-focus rounded-full flex items-center justify-center text-accent-content font-bold text-sm">
+                          {routeIndex + 1}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-8 h-8 bg-gradient-to-br from-accent to-accent-focus rounded-full flex items-center justify-center text-accent-content font-bold">
-                    {index + 1}
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           ))}
