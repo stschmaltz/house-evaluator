@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { appContainer } from '../../container/inversify.config';
 import { TYPES } from '../../container/types';
 import { EvaluationRepositoryInterface } from '../../repositories/evaluation/evaluation.repository.interface';
+import { getNextWeekdayTime } from '../../lib/departure-time';
 
 const evaluationRepository = appContainer.get<EvaluationRepositoryInterface>(
   TYPES.EvaluationRepository,
@@ -21,7 +22,6 @@ interface RouteRequest {
     location?: { lat: number; lng: number };
     name?: string;
   }>;
-  departureTime?: string;
 }
 
 interface TransitStep {
@@ -105,7 +105,7 @@ export default async function handler(
   }
 
   try {
-    const { origin, destinations, departureTime }: RouteRequest = req.body;
+    const { origin, destinations }: RouteRequest = req.body;
 
     if (!origin || !destinations || destinations.length === 0) {
       return res.status(400).json({ error: 'Missing origin or destinations' });
@@ -130,7 +130,6 @@ export default async function handler(
             origin,
             destination,
             travelMode,
-            departureTime,
           );
 
           if (routeResponse.multipleRoutes) {
@@ -220,7 +219,6 @@ async function calculateRoute(
   origin: RouteRequest['origin'],
   destination: RouteRequest['destinations'][0],
   travelMode: TravelMode,
-  departureTime?: string,
 ) {
   const requestBody: Record<string, unknown> = {
     origin: formatWaypoint(origin),
@@ -230,26 +228,18 @@ async function calculateRoute(
 
   if (travelMode === 'DRIVE') {
     requestBody.routingPreference = 'TRAFFIC_AWARE';
+    requestBody.departureTime = getNextWeekdayTime('18:00');
   }
 
   if (travelMode === 'TRANSIT') {
     requestBody.transitPreferences = {
       allowedTravelModes: ['BUS', 'SUBWAY', 'TRAIN', 'LIGHT_RAIL'],
+      routingPreference: 'FEWER_TRANSFERS',
     };
-
-    // Use provided departure time or current time
-    const timeToUse = departureTime
-      ? parseTimeToISO(departureTime)
-      : new Date().toISOString();
-    requestBody.departureTime = timeToUse;
+    requestBody.departureTime = getNextWeekdayTime('08:00');
 
     // Request up to 3 alternative routes for transit
     requestBody.computeAlternativeRoutes = true;
-  }
-
-  // For walking and biking, we can also set departure time for consistency
-  if ((travelMode === 'WALK' || travelMode === 'BICYCLE') && departureTime) {
-    requestBody.departureTime = parseTimeToISO(departureTime);
   }
 
   const fieldMask =
@@ -404,9 +394,7 @@ function parseTransitDetails(
       transfers++;
       transitSteps.push({
         mode: 'TRANSIT',
-        duration: formatDuration(
-          step.staticDuration || step.duration || '0s',
-        ),
+        duration: formatDuration(step.staticDuration || step.duration || '0s'),
         transitLineInfo: step.transitDetails
           ? {
               vehicle:
@@ -430,15 +418,6 @@ function parseTransitDetails(
   details.transitSteps = transitSteps;
 
   return details;
-}
-
-function parseTimeToISO(timeString: string): string {
-  const today = new Date();
-  const [hours, minutes] = timeString.split(':').map(Number);
-
-  today.setHours(hours, minutes, 0, 0);
-
-  return today.toISOString();
 }
 
 function deduplicateRoutes(routes: CalculatedRoute[]): CalculatedRoute[] {

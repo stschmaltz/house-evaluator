@@ -3,7 +3,6 @@ import { UserObject } from '../types/user';
 import { Header } from './Header';
 import { AddressInput } from './AddressInput';
 import { RouteResults } from './RouteResults';
-import { TravelModeSelector } from './TravelModeSelector';
 
 interface TransitDetails {
   totalWalkingTime?: string;
@@ -42,9 +41,13 @@ interface AuthenticatedHomeProps {
   }) => Promise<void>;
   routes?: RouteResult[];
   originAddress?: string;
+  originLocation?: { lat: number; lng: number };
+  destinations?: Array<{
+    name: string;
+    location: { lat: number; lng: number };
+  }>;
   isCalculatingRoutes?: boolean;
-  departureTime?: string;
-  onDepartureTimeChange?: (time: string) => void;
+  error?: string | null;
 }
 
 export function AuthenticatedHome({
@@ -52,9 +55,10 @@ export function AuthenticatedHome({
   onAddressSubmit,
   routes = [],
   originAddress = '',
+  originLocation,
+  destinations = [],
   isCalculatingRoutes = false,
-  departureTime,
-  onDepartureTimeChange,
+  error,
 }: AuthenticatedHomeProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-base-100 to-secondary/10">
@@ -62,16 +66,15 @@ export function AuthenticatedHome({
         <Header currentUser={currentUser} />
 
         <div className="flex flex-col gap-4">
-          <TravelModeSelector
-            departureTime={departureTime}
-            onDepartureTimeChange={onDepartureTimeChange}
-          />
           <AddressInput onSubmit={onAddressSubmit} />
           {(routes.length > 0 || isCalculatingRoutes) && (
             <RouteResults
               routes={routes}
               originAddress={originAddress}
+              originLocation={originLocation}
+              destinations={destinations}
               isLoading={isCalculatingRoutes}
+              error={error}
             />
           )}
         </div>

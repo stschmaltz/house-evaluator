@@ -1,3 +1,5 @@
+import { AddressMap } from './AddressMap';
+
 interface TransitDetails {
   totalWalkingTime?: string;
   numberOfTransfers?: number;
@@ -31,7 +33,13 @@ interface RouteResult {
 interface RouteResultsProps {
   routes: RouteResult[];
   originAddress: string;
+  originLocation?: { lat: number; lng: number };
+  destinations?: Array<{
+    name: string;
+    location: { lat: number; lng: number };
+  }>;
   isLoading?: boolean;
+  error?: string | null;
 }
 
 function formatFare(fare?: {
@@ -39,7 +47,9 @@ function formatFare(fare?: {
   units: string;
   nanos?: number;
 }): string {
+  console.log(fare);
   if (!fare) return '';
+
   const amount = parseFloat(fare.units) + (fare.nanos || 0) / 1000000000;
   return `${fare.currencyCode} ${amount.toFixed(2)}`;
 }
@@ -71,13 +81,23 @@ function getTransitEmoji(vehicleType?: string): string {
   return '🚌'; // Default to bus
 }
 
-function groupRoutesByLocation(routes: RouteResult[]) {
-  const grouped: Record<string, Record<TravelMode, RouteResult[]>> = {};
+function groupRoutesByLocation(
+  routes: RouteResult[],
+): Record<string, Map<TravelMode, RouteResult[]>> {
+  const grouped: Record<string, Map<TravelMode, RouteResult[]>> = {};
 
   for (const route of routes) {
     const baseName = route.destination.replace(/ \(Option \d+\)$/, '');
-    (grouped[baseName] ??= {})[route.travelMode] ??= [];
-    grouped[baseName][route.travelMode].push(route);
+
+    if (!grouped[baseName]) {
+      grouped[baseName] = new Map();
+    }
+
+    if (!grouped[baseName].has(route.travelMode)) {
+      grouped[baseName].set(route.travelMode, []);
+    }
+
+    grouped[baseName].get(route.travelMode)!.push(route);
   }
 
   return grouped;
@@ -108,7 +128,10 @@ function getTravelModeName(mode: TravelMode): string {
 export function RouteResults({
   routes,
   originAddress,
+  originLocation,
+  destinations,
   isLoading,
+  error,
 }: RouteResultsProps) {
   if (isLoading) {
     return (
@@ -150,6 +173,10 @@ export function RouteResults({
     return null;
   }
 
+  if (error) {
+    return <div className="text-red-500">{error}</div>;
+  }
+
   return (
     <div className="card bg-base-100 shadow-xl border border-primary/20">
       <div className="card-body p-8">
@@ -180,6 +207,39 @@ export function RouteResults({
         </div>
 
         <div className="space-y-6">
+          {originLocation && (
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
+                <svg
+                  className="w-5 h-5 text-primary"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                Location Overview
+              </h3>
+              <AddressMap
+                originLocation={originLocation}
+                originAddress={originAddress}
+                destinations={destinations}
+                className="mb-6"
+              />
+            </div>
+          )}
+
           {Object.entries(groupRoutesByLocation(routes)).map(
             ([locationName, travelModeGroups], locationIndex) => (
               <div key={locationName} className="space-y-3">
@@ -191,7 +251,7 @@ export function RouteResults({
                 </h2>
 
                 <div className="space-y-3 ml-6">
-                  {Object.entries(travelModeGroups)
+                  {Array.from(travelModeGroups.entries())
                     .sort(
                       ([, aRoutes], [, bRoutes]) =>
                         getShortestDuration(aRoutes) -

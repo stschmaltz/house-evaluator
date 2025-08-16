@@ -57,13 +57,15 @@ const DEFAULT_DESTINATIONS = [
 ];
 
 export default function Home() {
-  const { error } = useUser();
+  const { error: authError } = useUser();
   const [isSigningIn, currentUser] = useUserSignIn();
   const [routes, setRoutes] = useState<RouteResult[]>([]);
   const [originAddress, setOriginAddress] = useState('');
+  const [originLocation, setOriginLocation] = useState<
+    { lat: number; lng: number } | undefined
+  >();
   const [isCalculatingRoutes, setIsCalculatingRoutes] = useState(false);
-
-  const [departureTime, setDepartureTime] = useState<string>('');
+  const [error, setError] = useState<string | null>(authError?.message || null);
 
   const handleAddressSubmit = async (addressData: {
     address: string;
@@ -74,7 +76,9 @@ export default function Home() {
 
     setIsCalculatingRoutes(true);
     setOriginAddress(addressData.address);
+    setOriginLocation(addressData.location);
     setRoutes([]);
+    setError(null);
 
     try {
       const response = await fetch('/api/routes', {
@@ -85,12 +89,12 @@ export default function Home() {
         body: JSON.stringify({
           origin: addressData,
           destinations: DEFAULT_DESTINATIONS,
-          departureTime: departureTime || undefined,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to calculate routes');
+        setRoutes([]);
+        setError('Failed to calculate routes');
       }
 
       const data = await response.json();
@@ -98,9 +102,11 @@ export default function Home() {
         (route: RouteResult) => parseDurationToMinutes(route.duration) <= 60,
       );
       setRoutes(filteredRoutes);
+      setError(null);
     } catch (error) {
       console.error('Error calculating routes:', error);
       setRoutes([]);
+      setError('Failed to calculate routes');
     } finally {
       setIsCalculatingRoutes(false);
     }
@@ -111,7 +117,7 @@ export default function Home() {
   }
 
   if (error) {
-    return <ErrorState error={error} />;
+    return <ErrorState error={new Error(error)} />;
   }
 
   if (currentUser) {
@@ -121,9 +127,10 @@ export default function Home() {
         onAddressSubmit={handleAddressSubmit}
         routes={routes}
         originAddress={originAddress}
+        originLocation={originLocation}
+        destinations={DEFAULT_DESTINATIONS}
         isCalculatingRoutes={isCalculatingRoutes}
-        departureTime={departureTime}
-        onDepartureTimeChange={setDepartureTime}
+        error={error}
       />
     );
   }

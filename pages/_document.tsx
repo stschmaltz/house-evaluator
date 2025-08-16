@@ -7,7 +7,7 @@ export default function Document() {
         <script
           async
           defer
-          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
+          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places,maps`}
         />
       </Head>
       <body className="antialiased">
