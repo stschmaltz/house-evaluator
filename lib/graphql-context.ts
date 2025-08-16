@@ -2,12 +2,14 @@ import { Session } from '@auth0/nextjs-auth0';
 import { UserCache } from './user-cache';
 import { logger } from './logger';
 import { UserRepositoryInterface } from '../repositories/user/user.repository.interface';
+import { EvaluationRepositoryInterface } from '../repositories/evaluation/evaluation.repository.interface';
 import { UserObject } from '../types/user';
 
 export interface GraphQLContext {
   auth0Id?: string;
   user: UserObject | null;
   userRepository: UserRepositoryInterface;
+  evaluationRepository: EvaluationRepositoryInterface;
 }
 
 export class ContextBuilder {
@@ -15,6 +17,7 @@ export class ContextBuilder {
 
   constructor(
     private userRepository: UserRepositoryInterface,
+    private evaluationRepository: EvaluationRepositoryInterface,
     cacheTtlMinutes: number = 5,
   ) {
     this.userCache = new UserCache(cacheTtlMinutes);
@@ -45,6 +48,7 @@ export class ContextBuilder {
       auth0Id,
       user,
       userRepository: this.userRepository,
+      evaluationRepository: this.evaluationRepository,
     };
   }
 }
