@@ -62,10 +62,6 @@ const DEFAULT_DESTINATIONS = [
     name: 'Killarney Aquatic',
     location: { lat: 51.03728728673486, lng: -114.13022860194634 },
   },
-  {
-    name: 'Sushi',
-    location: { lat: 51.03728728673486, lng: -114.13022860194634 },
-  },
 ];
 
 export default function Home() {
