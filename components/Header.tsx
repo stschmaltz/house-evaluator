@@ -30,10 +30,6 @@ export function Header({ currentUser }: HeaderProps) {
               House Evaluator
             </h1>
           </div>
-          <p className="text-lg text-base-content/70 ml-[60px]">
-            Find your perfect home by evaluating commute times to the places
-            that matter most
-          </p>
         </div>
 
         <div className="flex items-center gap-4">

@@ -51,8 +51,20 @@ const DEFAULT_DESTINATIONS = [
     location: { lat: 51.06541940356553, lng: -114.13378879331637 },
   },
   {
-    name: 'Bottlescrews',
-    location: { lat: 51.043684917974744, lng: -114.06544900292467 },
+    name: 'Downtown',
+    location: { lat: 51.04544058941334, lng: -114.07071098625774 },
+  },
+  {
+    name: 'Winston Churchill Aquatic',
+    location: { lat: 51.09689344709322, lng: -114.13761782760777 },
+  },
+  {
+    name: 'Killarney Aquatic',
+    location: { lat: 51.03728728673486, lng: -114.13022860194634 },
+  },
+  {
+    name: 'Sushi',
+    location: { lat: 51.03728728673486, lng: -114.13022860194634 },
   },
 ];
 

@@ -49,7 +49,7 @@ export function getNextWeekdayTime(time: string): string {
 
   // Convert Mountain Time to UTC and return ISO timestamp
   const utcDate = fromZonedTime(targetDate, MOUNTAIN_TIMEZONE);
-  return utcDate.toUTCString();
+  return utcDate.toISOString();
 }
 
 /**

@@ -30,6 +30,7 @@ interface TransitStep {
   transitLineInfo?: {
     vehicle: string;
     lineName: string;
+    lineShortName?: string;
     lineColor?: string;
   };
 }
@@ -60,6 +61,7 @@ interface LegStep {
     transitLine?: {
       vehicle?: { type?: string };
       name?: string;
+      shortName?: string;
       color?: string;
     };
   };
@@ -400,6 +402,7 @@ function parseTransitDetails(
               vehicle:
                 step.transitDetails.transitLine?.vehicle?.type || 'Unknown',
               lineName: step.transitDetails.transitLine?.name || 'Unknown',
+              lineShortName: step.transitDetails.transitLine?.shortName,
               lineColor: step.transitDetails.transitLine?.color,
             }
           : undefined,
@@ -431,7 +434,10 @@ function deduplicateRoutes(routes: CalculatedRoute[]): CalculatedRoute[] {
       route.transitDetails?.numberOfTransfers || 0,
       route.transitDetails?.transitSteps
         ?.map((step: TransitStep) =>
-          step.mode === 'WALKING' ? 'WALK' : step.transitLineInfo?.lineName,
+          step.mode === 'WALKING'
+            ? 'WALK'
+            : step.transitLineInfo?.lineShortName ||
+              step.transitLineInfo?.lineName,
         )
         .join('|') || '',
     ].join('::');
