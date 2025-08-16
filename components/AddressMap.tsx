@@ -34,13 +34,15 @@ export function AddressMap({
 
         const map = new Map(mapRef.current!, {
           center: originLocation,
-          zoom: 12,
+          zoom: 13,
           mapTypeId: google.maps.MapTypeId.ROADMAP,
           disableDefaultUI: false,
           zoomControl: true,
           mapTypeControl: false,
           streetViewControl: false,
           fullscreenControl: true,
+          scrollwheel: true,
+          gestureHandling: 'greedy',
         });
 
         mapInstanceRef.current = map;
@@ -88,24 +90,8 @@ export function AddressMap({
           markersRef.current.push(destinationMarker);
         });
 
-        const bounds = new google.maps.LatLngBounds();
-        bounds.extend(originLocation);
-        destinations.forEach((dest) => bounds.extend(dest.location));
-
-        if (destinations.length > 0) {
-          map.fitBounds(bounds);
-
-          const listener = google.maps.event.addListener(
-            map,
-            'bounds_changed',
-            () => {
-              google.maps.event.removeListener(listener);
-              if (map.getZoom()! > 15) {
-                map.setZoom(15);
-              }
-            },
-          );
-        }
+        map.setCenter(originLocation);
+        map.setZoom(13);
       } catch (error) {
         console.error('Error initializing map:', error);
       }

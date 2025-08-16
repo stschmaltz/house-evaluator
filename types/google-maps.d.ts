@@ -24,6 +24,8 @@ declare namespace google {
       mapTypeControl?: boolean;
       streetViewControl?: boolean;
       fullscreenControl?: boolean;
+      scrollwheel?: boolean;
+      gestureHandling?: 'cooperative' | 'greedy' | 'none' | 'auto';
     }
 
     interface LatLngLiteral {
