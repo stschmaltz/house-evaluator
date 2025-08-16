@@ -1,15 +1,26 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from './ui/Button';
 
+interface RecentSearch {
+  address: string;
+  placeId?: string;
+  location?: { lat: number; lng: number };
+  timestamp: number;
+}
+
 interface AddressInputProps {
   onSubmit: (addressData: {
     address: string;
     placeId?: string;
     location?: { lat: number; lng: number };
   }) => Promise<void>;
+  recentSearches?: RecentSearch[];
 }
 
-export function AddressInput({ onSubmit }: AddressInputProps) {
+export function AddressInput({
+  onSubmit,
+  recentSearches = [],
+}: AddressInputProps) {
   const [address, setAddress] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState<{
@@ -67,6 +78,27 @@ export function AddressInput({ onSubmit }: AddressInputProps) {
         address,
         placeId: selectedPlace?.placeId,
         location: selectedPlace?.location,
+      });
+      setAddress('');
+      setSelectedPlace(null);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleRecentSearchClick = async (recentSearch: RecentSearch) => {
+    setAddress(recentSearch.address);
+    setSelectedPlace({
+      placeId: recentSearch.placeId,
+      location: recentSearch.location,
+    });
+
+    setIsSearching(true);
+    try {
+      await onSubmit({
+        address: recentSearch.address,
+        placeId: recentSearch.placeId,
+        location: recentSearch.location,
       });
       setAddress('');
       setSelectedPlace(null);
@@ -146,6 +178,56 @@ export function AddressInput({ onSubmit }: AddressInputProps) {
             onClick={handleSubmit}
           />
         </form>
+
+        {recentSearches.length > 0 && (
+          <div className="mt-6 pt-6 border-t border-base-300">
+            <h3 className="text-lg font-semibold text-base-content mb-4 flex items-center gap-2">
+              <svg
+                className="w-5 h-5 text-primary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              Recent Searches
+            </h3>
+            <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
+              {recentSearches.map((search, index) => (
+                <button
+                  key={`${search.address}-${search.timestamp}`}
+                  onClick={() => handleRecentSearchClick(search)}
+                  disabled={isSearching}
+                  className="text-left p-3 rounded-lg border border-base-300 hover:border-primary hover:bg-primary/5 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-base-content group-hover:text-primary text-sm font-medium truncate pr-2">
+                      {search.address}
+                    </span>
+                    <svg
+                      className="w-4 h-4 text-base-content/40 group-hover:text-primary shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

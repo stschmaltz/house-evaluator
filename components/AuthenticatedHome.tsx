@@ -3,6 +3,7 @@ import { UserObject } from '../types/user';
 import { Header } from './Header';
 import { AddressInput } from './AddressInput';
 import { RouteResults } from './RouteResults';
+import { useLocalStorage } from '../hooks/use-local-storage.hook';
 
 interface TransitDetails {
   totalWalkingTime?: string;
@@ -30,6 +31,13 @@ interface RouteResult {
   polyline?: string;
   travelMode: 'DRIVE' | 'TRANSIT' | 'WALK' | 'BICYCLE';
   transitDetails?: TransitDetails;
+}
+
+interface RecentSearch {
+  address: string;
+  placeId?: string;
+  location?: { lat: number; lng: number };
+  timestamp: number;
 }
 
 interface AuthenticatedHomeProps {
@@ -60,13 +68,43 @@ export function AuthenticatedHome({
   isCalculatingRoutes = false,
   error,
 }: AuthenticatedHomeProps) {
+  const [recentSearches, setRecentSearches] = useLocalStorage<RecentSearch[]>(
+    'recent-searches',
+    [],
+  );
+
+  const handleAddressSubmit = async (addressData: {
+    address: string;
+    placeId?: string;
+    location?: { lat: number; lng: number };
+  }) => {
+    await onAddressSubmit(addressData);
+
+    const newSearch: RecentSearch = {
+      ...addressData,
+      timestamp: Date.now(),
+    };
+
+    const updatedSearches = [
+      newSearch,
+      ...recentSearches.filter(
+        (search) => search.address !== addressData.address,
+      ),
+    ].slice(0, 5);
+
+    setRecentSearches(updatedSearches);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-base-100 to-secondary/10">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <Header currentUser={currentUser} />
 
         <div className="flex flex-col gap-4">
-          <AddressInput onSubmit={onAddressSubmit} />
+          <AddressInput
+            onSubmit={handleAddressSubmit}
+            recentSearches={recentSearches}
+          />
           {(routes.length > 0 || isCalculatingRoutes) && (
             <RouteResults
               routes={routes}
