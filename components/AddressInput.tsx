@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from './ui/Button';
+import { useGoogleMaps } from '../context/GoogleMapsContext';
 
 interface RecentSearch {
   address: string;
@@ -29,9 +30,10 @@ export function AddressInput({
   } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const { isLoaded } = useGoogleMaps();
 
   useEffect(() => {
-    if (!inputRef.current || !window.google?.maps?.places) return;
+    if (!inputRef.current || !isLoaded || !window.google?.maps?.places) return;
 
     autocompleteRef.current = new window.google.maps.places.Autocomplete(
       inputRef.current,
@@ -67,7 +69,7 @@ export function AddressInput({
         );
       }
     };
-  }, []);
+  }, [isLoaded]);
 
   const handleSubmit = async () => {
     if (!address.trim()) return;

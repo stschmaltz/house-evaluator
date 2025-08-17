@@ -10,6 +10,7 @@ import SEO from '../next-seo.config';
 
 import { CurrentUserProvider } from '../context/UserContext';
 import { ThemeProvider } from '../context/ThemeContext';
+import { GoogleMapsProvider } from '../context/GoogleMapsContext';
 import { ProtectedLayout } from '../components/ProtectedLayout';
 import '../styles/global.css';
 import { usePWASetup } from '../hooks/use-pwa-setup.hook';
@@ -28,9 +29,11 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
   const defaultLayout = (page: ReactElement) => (
     <UserProvider user={pageProps.user}>
       <ThemeProvider>
-        <CurrentUserProvider>
-          <ProtectedLayout>{page}</ProtectedLayout>
-        </CurrentUserProvider>
+        <GoogleMapsProvider>
+          <CurrentUserProvider>
+            <ProtectedLayout>{page}</ProtectedLayout>
+          </CurrentUserProvider>
+        </GoogleMapsProvider>
       </ThemeProvider>
     </UserProvider>
   );
